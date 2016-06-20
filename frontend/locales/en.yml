@@ -1,0 +1,5 @@
+en:
+  plugins:
+    digitization_work_order:
+      button: Work Order Report
+      loading: Loading...
