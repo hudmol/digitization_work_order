@@ -1,9 +1,55 @@
 <%= stylesheet_link_tag "#{AppConfig[:frontend_prefix]}assets/fattable.css" %>
-<%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/fattable.min.js" %>
+<%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/fattable.js" %>
 
 <div class="record-pane">
 
   <h1>Work Order Form</h1>
 
   <p><%= @uri %></p>
+
+  <div id='work_order_table'></div>
 </div>
+
+<script>
+  $(document).ready(function() {
+    var tableData = new fattable.SyncTableModel();
+    tableData.getCellSync = function(i,j) {
+      return {
+        "content": "Cell " + i + "," + j,
+        "rowId": i
+      }
+    };
+    tableData.columnHeaders = ["", "Record Title"];
+
+    var painter = new fattable.Painter();
+    painter.fillCell = function(cellDiv, data) {
+      cellDiv.innerHTML = data.content;
+      if (data.rowId % 2 == 0) {
+        cellDiv.className = "even";
+      }
+      else {
+        cellDiv.className = "odd";
+      }
+    }
+    painter.fillCellPending = function(cellDiv, data) {
+      cellDiv.textContent = "";
+      cellDiv.className = "pending";
+    }
+
+    var columnWidths = [40, 600];
+
+    var table = fattable({
+      "container": "#work_order_table",
+      "model": tableData,
+      "nbRows": 40000,
+      "rowHeight": 35,
+      "headerHeight": 40,
+      "painter": painter,
+      "columnWidths": columnWidths
+    });
+
+    window.onresize = function() {
+      table.setup();
+    }
+  });
+</script>
