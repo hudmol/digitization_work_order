@@ -1,4 +1,4 @@
-Yale Digitization Work Order Plugin
+Digitization Work Order Plugin
 -----------------------------------
 
 # Getting Started
