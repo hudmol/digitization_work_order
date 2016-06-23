@@ -13,13 +13,23 @@
 <script>
   $(document).ready(function() {
     var tableData = new fattable.SyncTableModel();
+
     tableData.getCellSync = function(i,j) {
       return {
         "content": "Cell " + i + "," + j,
         "rowId": i
       }
     };
-    tableData.columnHeaders = ["", "Record Title"];
+
+    tableData.getHeaderSync = function(j) {
+      if (j == 0) {
+        return "Selected";
+      } else if (j == 1) {
+        return "Record Title";
+      } else {
+        return "Col" + j;
+      }
+    }
 
     var painter = new fattable.Painter();
     painter.fillCell = function(cellDiv, data) {
@@ -36,7 +46,7 @@
       cellDiv.className = "pending";
     }
 
-    var columnWidths = [40, 600];
+    var columnWidths = [100, 600];
 
     var table = fattable({
       "container": "#work_order_table",

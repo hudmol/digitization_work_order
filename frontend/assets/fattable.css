@@ -28,16 +28,11 @@
 .fattable-v-scrollbar > div {
     padding: 0 !important;
 }
-body {
-    width: 500%;
-    background-color: red;
-}
-* {
-    box-sizing: border-box;
-    -moz-box-sizing: border-box;
-}
 .fattable {
     overflow: hidden;
+    height: 300px;
+    width: 100%;
+    position: relative;
 }
 .fattable ::-webkit-scrollbar {
     width: 10px;
@@ -98,4 +93,28 @@ body {
 }
 .fattable-header-container .fattable-viewport > div {
     height: 100%;
+}
+
+.fattable-header-container {
+    background-color: #EEE;
+    border-bottom: solid 2px #CCC;
+    color: #222;
+}
+.fattable-header-container > div > div {
+    border-right: solid 1px #CCC;
+    padding: 10px;
+}
+.fattable-body-container {
+    background-color: #F6F6F6;
+}
+.fattable-body-container > div > div {
+    border-right: solid 1px #CCC;
+    padding: 10px;
+}
+.fattable-body-container > div > div.even {
+    color: #222;
+    background-color: #FFF;
+}
+.fattable-body-container > div > div.pending {
+    background-color: #FAFFFC;
 }
