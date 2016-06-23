@@ -12,54 +12,120 @@
 
 <script>
   $(document).ready(function() {
-    var tableData = new fattable.SyncTableModel();
 
-    tableData.getCellSync = function(i,j) {
-      return {
-        "content": "Cell " + i + "," + j,
-        "rowId": i
+
+    var flattenTree = function (tree, level) {
+      if (level === undefined) {
+        level = 0;
       }
+
+      var root = {'title': tree[0], 'level': level};
+      var result = [root]
+
+      if (tree.length > 1) {
+        root['children'] = true
+        for (var i = 1; i < tree.length; i++) {
+          result = result.concat(flattenTree(tree[i], level + 1));
+        }
+      }
+
+      return result;
     };
 
-    tableData.getHeaderSync = function(j) {
-      if (j == 0) {
-        return "Selected";
-      } else if (j == 1) {
-        return "Record Title";
-      } else {
-        return "Col" + j;
+
+    var renderTable = function (tree) {
+
+      var tableData = new fattable.SyncTableModel();
+      tableData.getCellSync = function(i,j) {
+        if (i >= tree.length) {
+          return {
+            'content': '',
+            'rowId': i,
+          };
+        }
+
+        if (j === 0) {
+          return {
+            "content": "<input type='checkbox' />",
+            "rowId": i,
+          }
+        }
+
+        var spaces = '';
+
+        for (var space = 0; space < tree[i]['level']; space++) {
+          spaces += '&nbsp;&nbsp;';
+        }
+
+        var content = spaces + tree[i]['title'];
+
+        if (tree[i]['children']) {
+          content = '<b>' + content + '</b>';
+        }
+
+        return {
+          "content": content,
+          "rowId": i
+        }
+      };
+
+      tableData.getHeaderSync = function(j) {
+        if (j == 0) {
+          return "Selected";
+        } else if (j == 1) {
+          return "Record Title";
+        } else {
+          return "Col" + j;
+        }
+      }
+
+      var painter = new fattable.Painter();
+      painter.fillCell = function(cellDiv, data) {
+        cellDiv.innerHTML = data.content;
+        if (data.rowId % 2 == 0) {
+          cellDiv.className = "even";
+        }
+        else {
+          cellDiv.className = "odd";
+        }
+      }
+      painter.fillCellPending = function(cellDiv, data) {
+        cellDiv.textContent = "";
+        cellDiv.className = "pending";
+      }
+
+      var table = fattable({
+        "container": "#work_order_table",
+        "model": tableData,
+        "nbRows": tree.length,
+        "rowHeight": 35,
+        "headerHeight": 40,
+        "painter": painter,
+        "columnWidths": [100, 4500]
+      });
+
+      window.onresize = function() {
+        table.setup();
       }
     }
 
-    var painter = new fattable.Painter();
-    painter.fillCell = function(cellDiv, data) {
-      cellDiv.innerHTML = data.content;
-      if (data.rowId % 2 == 0) {
-        cellDiv.className = "even";
-      }
-      else {
-        cellDiv.className = "odd";
-      }
-    }
-    painter.fillCellPending = function(cellDiv, data) {
-      cellDiv.textContent = "";
-      cellDiv.className = "pending";
-    }
+    <%
+    require 'cgi'
 
-    var columnWidths = [100, 600];
+    def escape_tree(tree)
+      [CGI.escapeHTML(tree[0])] + tree[1..-1].map {|child| escape_tree(child)}
+    end
 
-    var table = fattable({
-      "container": "#work_order_table",
-      "model": tableData,
-      "nbRows": 40000,
-      "rowHeight": 35,
-      "headerHeight": 40,
-      "painter": painter,
-      "columnWidths": columnWidths
+
+    tree = JSONModel::HTTP::get_json(@uri + "/small_tree")
+
+    tree = escape_tree(tree)
+    %>
+
+    var flattened = flattenTree(<%= tree.to_json.html_safe %>).filter(function (elt) {
+      return elt['children'];
     });
 
-    window.onresize = function() {
-      table.setup();
-    }
+    renderTable(flattened);
   });
 </script>
