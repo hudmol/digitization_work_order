@@ -13,19 +13,18 @@
 <script>
   $(document).ready(function() {
 
-
     var flattenTree = function (tree, level) {
       if (level === undefined) {
         level = 0;
       }
 
-      var root = {'title': tree[0], 'level': level};
+      var root = {'uri': tree.uri, 'title': tree.title, 'level': level, 'selected': false};
       var result = [root]
 
-      if (tree.length > 1) {
+      if (tree['children'] && tree['children'].length > 0) {
         root['children'] = true
-        for (var i = 1; i < tree.length; i++) {
-          result = result.concat(flattenTree(tree[i], level + 1));
+        for (var i = 0; i < tree['children'].length; i++) {
+          result = result.concat(flattenTree(tree['children'][i], level + 1));
         }
       }
 
@@ -35,9 +34,15 @@
 
     var renderTable = function (tree) {
 
+      var filtered_tree = tree.filter(function (elt) {
+        return elt['children'] || elt['selected'];
+      });
+
+      $("#work_order_table").empty();
+
       var tableData = new fattable.SyncTableModel();
       tableData.getCellSync = function(i,j) {
-        if (i >= tree.length) {
+        if (i >= filtered_tree.length) {
           return {
             'content': '',
             'rowId': i,
@@ -46,20 +51,20 @@
 
         if (j === 0) {
           return {
-            "content": "<input type='checkbox' />",
+            "content": "<input data-rowid=' "+ i +" ' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " />",
             "rowId": i,
           }
         }
 
         var spaces = '';
 
-        for (var space = 0; space < tree[i]['level']; space++) {
+        for (var space = 0; space < filtered_tree[i]['level']; space++) {
           spaces += '&nbsp;&nbsp;';
         }
 
-        var content = spaces + tree[i]['title'];
+        var content = spaces + filtered_tree[i]['title'];
 
-        if (tree[i]['children']) {
+        if (filtered_tree[i]['children']) {
           content = '<b>' + content + '</b>';
         }
 
@@ -94,26 +99,37 @@
         cellDiv.className = "pending";
       }
 
+      var ROW_HEIGHT = 35;
+
       var table = fattable({
         "container": "#work_order_table",
         "model": tableData,
-        "nbRows": tree.length,
-        "rowHeight": 35,
+        "nbRows": filtered_tree.length,
+        "rowHeight": ROW_HEIGHT,
         "headerHeight": 40,
         "painter": painter,
         "columnWidths": [100, 4500]
       });
 
+      var idealHeight = ROW_HEIGHT * (filtered_tree.length + 1) + 20;
+      $("#work_order_table").height(Math.min($("#work_order_table").height(), idealHeight));
+
       window.onresize = function() {
         table.setup();
       }
+
+      return table;
     }
 
     <%
     require 'cgi'
 
     def escape_tree(tree)
-      [CGI.escapeHTML(tree[0])] + tree[1..-1].map {|child| escape_tree(child)}
+      tree['title'] = CGI.escapeHTML(tree['title'])
+
+      ASUtils.wrap(tree['children']).map {|child| escape_tree(child)}
+
+      tree
     end
 
 
@@ -122,10 +138,33 @@
     tree = escape_tree(tree)
     %>
 
-    var flattened = flattenTree(<%= tree.to_json.html_safe %>).filter(function (elt) {
-      return elt['children'];
-    });
+    var flattened = flattenTree(<%= tree.to_json.html_safe %>);
 
-    renderTable(flattened);
+    workOrderFatTable = renderTable(flattened);
+
+    $("#work_order_table").on("click", ":input", function(event) {
+      var $checkbox = $(event.target);
+
+      var rowid = parseInt($checkbox.data("rowid"));
+      var uri = $checkbox.val();
+
+      // update record 'selected' state
+      var index = flattened.findIndex(function(record,index,arr) {
+        return record.uri == uri;
+      });
+      flattened[index].selected = $checkbox.is(":checked");
+
+      // update all children
+      var level = flattened[index].level;
+      for (var i = index + 1; i < flattened.length; i ++) {
+        if (flattened[i].level > level) {
+          flattened[i].selected = $checkbox.is(":checked");
+        } else {
+          break;
+        }
+      }
+
+      renderTable(flattened);
+    });
   });
 </script>
