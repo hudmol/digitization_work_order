@@ -1,6 +1,10 @@
 class WorkOrderController < ApplicationController
 
-  set_access_control "view_repository" => [:summary, :generate_report]
+  set_access_control "view_repository" => [:index, :summary, :generate_report]
+
+  def index
+    @uri = params[:uri]
+  end
 
   def summary
     @uris = params[:uri]

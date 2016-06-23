@@ -18,14 +18,23 @@ WorkOrderToolbarAction.prototype.setupButton = function() {
 WorkOrderToolbarAction.prototype.showWorkOrderForm = function(event) {
   event.preventDefault();
 
-  AS.openCustomModal("workOrderModal",
-                     this.$button.text(),
-                     AS.renderTemplate("workOrderLoadingTemplate"),
-                     "large",
-                     {},
-                     this.$button);
+  var $primary = $(".jstree-node.primary-selected:first");
+  var uri = $primary.data("uri");
 
-  new WorkOrderForm($("#workOrderModal #workOrderForm"), this);
+
+  var url = this.$button.attr("href");
+  url += "?uri=" + uri;
+
+  location.href = url;
+
+  // AS.openCustomModal("workOrderModal",
+  //                    this.$button.text(),
+  //                    AS.renderTemplate("workOrderLoadingTemplate"),
+  //                    "large",
+  //                    {},
+  //                    this.$button);
+  //
+  // new WorkOrderForm($("#workOrderModal #workOrderForm"), this);
 };
 
 
