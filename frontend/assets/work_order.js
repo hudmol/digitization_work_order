@@ -54,8 +54,11 @@ WorkOrderForm.prototype.loadForm = function() {
 
 // if a resource tree page, setup the work order toolbar action
 $(document).on("loadedrecordform.aspace", function(event, $container) {
-  if ($container.is("#archives_tree_toolbar")) {
+  // are we dealing with a record with a tree?
+  if ($(".archives-tree").data("read-only") || $container.is("#archives_tree_toolbar")) {
+    // is the tree a resource tree?
     if (AS._tree && AS._tree.get_json()[0].type == "resource") {
+      // hurray! add the button.
       new WorkOrderToolbarAction();
     }
   }
