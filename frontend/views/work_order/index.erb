@@ -1,13 +1,37 @@
 <%= stylesheet_link_tag "#{AppConfig[:frontend_prefix]}assets/fattable.css" %>
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/fattable.js" %>
 
+<%
+  require 'cgi'
+
+  def escape_tree(tree)
+    tree['title'] = CGI.escapeHTML(tree['title'])
+
+    ASUtils.wrap(tree['children']).map {|child| escape_tree(child)}
+
+    tree
+  end
+
+
+  tree = JSONModel::HTTP::get_json(@uri + "/small_tree")
+
+  tree = escape_tree(tree)
+%>
+
 <div class="record-pane">
 
   <h1>Work Order Form</h1>
 
-  <p><%= @uri %></p>
+  <p><strong>Resource: </strong> <%= tree['title'] %></p>
+  <p><strong>Records Selected: </strong> <span id="selectedCount"></span></p>
 
   <div id='work_order_table'></div>
+
+  <div>
+    <hr>
+    <button id="generateWorkOrderReport" class="btn btn-primary" disabled>Generate Report</button>
+    <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
+  </div>
 </div>
 
 <script>
@@ -19,6 +43,7 @@
       }
 
       var root = {'uri': tree.uri, 'title': tree.title, 'level': level, 'selected': false};
+
       var result = [root]
 
       if (tree['children'] && tree['children'].length > 0) {
@@ -31,12 +56,56 @@
       return result;
     };
 
+    var getIndexForUri = function(tree, uri) {
+      var index;
+
+      $.each(flattened, function(i, record) {
+        if (record.uri == uri) {
+          index = i;
+          return false
+        }
+      });
+
+      if (index == null) {
+        throw "uri not found in tree: " + uri;
+      }
+
+      return index;
+    }
 
     var renderTable = function (tree) {
 
+      var parents_selected = [tree[0]['selected']];
+      var level = tree[0]['level'];
+
+      var selected_count = 0;
+
       var filtered_tree = tree.filter(function (elt) {
-        return elt['children'] || elt['selected'];
+        if (elt['selected']) {
+          selected_count = selected_count + 1;
+        }
+
+        if (elt['level'] > level && elt['children']) {
+          parents_selected.push(elt['selected']);
+        } else if (elt['level'] < level) {
+          for(var i=0; i< level - elt['level']; i++) {
+            parents_selected.pop();
+          }
+          if (elt['children']) {
+            parents_selected.push(elt['selected']);
+          }
+        } else if (elt['level'] == level && elt['children']) {
+          parents_selected.pop();
+          parents_selected.push(elt['selected']);
+        }
+
+        level = elt['level'];
+
+        return elt['level'] <= 1 || elt['selected'] || parents_selected[parents_selected.length - 1];
       });
+
+      $("#selectedCount").html(selected_count);
+      $("#generateWorkOrderReport").prop("disabled", selected_count == 0);
 
       $("#work_order_table").empty();
 
@@ -121,23 +190,6 @@
       return table;
     }
 
-    <%
-    require 'cgi'
-
-    def escape_tree(tree)
-      tree['title'] = CGI.escapeHTML(tree['title'])
-
-      ASUtils.wrap(tree['children']).map {|child| escape_tree(child)}
-
-      tree
-    end
-
-
-    tree = JSONModel::HTTP::get_json(@uri + "/small_tree")
-
-    tree = escape_tree(tree)
-    %>
-
     var flattened = flattenTree(<%= tree.to_json.html_safe %>);
 
     workOrderFatTable = renderTable(flattened);
@@ -149,9 +201,7 @@
       var uri = $checkbox.val();
 
       // update record 'selected' state
-      var index = flattened.findIndex(function(record,index,arr) {
-        return record.uri == uri;
-      });
+      var index = getIndexForUri(flattened, uri);
       flattened[index].selected = $checkbox.is(":checked");
 
       // update all children
@@ -164,7 +214,23 @@
         }
       }
 
-      renderTable(flattened);
+      workOrderFatTable = renderTable(flattened);
+
+      // navigate back to the row you just clicked
+      workOrderFatTable.goTo(rowid, 0);
+    });
+
+    $("#generateWorkOrderReport").on("click", function() {
+      var selected = [];
+      $.each(flattened, function(i, elt) {
+        if (elt['selected']) {
+          selected.push(elt['uri']);
+        }
+      });
+
+      console.log("vvvvvvvv SELECTED URIS: vvvvvvvv");
+      console.log(selected);
+      console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
     });
   });
 </script>
