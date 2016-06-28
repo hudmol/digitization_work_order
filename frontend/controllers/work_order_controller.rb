@@ -1,6 +1,10 @@
 class WorkOrderController < ApplicationController
 
-  set_access_control "view_repository" => [:summary, :generate_report]
+  set_access_control "view_repository" => [:index, :summary, :generate_report]
+
+  def index
+    @uri = params[:resource]
+  end
 
   def summary
     @uris = params[:uri]
@@ -9,6 +13,9 @@ class WorkOrderController < ApplicationController
   end
 
   def generate_report
+    p "Work order selected URIs: "
+    p params[:selected]
+
     raise "Not implemented"
   end
 

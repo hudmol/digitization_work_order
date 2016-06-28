@@ -1,0 +1,40 @@
+<%= stylesheet_link_tag "#{AppConfig[:frontend_prefix]}assets/fattable.css" %>
+<%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/fattable.js" %>
+
+<%
+  require 'cgi'
+
+  def escape_tree(tree)
+    tree['title'] = CGI.escapeHTML(tree['title'])
+
+    ASUtils.wrap(tree['children']).map {|child| escape_tree(child)}
+
+    tree
+  end
+
+
+  tree = JSONModel::HTTP::get_json(@uri + "/small_tree")
+
+  tree = escape_tree(tree)
+%>
+
+<div class="record-pane">
+
+  <h1>Work Order Form</h1>
+
+  <p><strong>Resource: </strong> <%= tree['title'] %></p>
+  <p><strong>Records Selected: </strong> <span id="selectedCount"></span></p>
+
+  <div id='work_order_table'></div>
+
+  <div>
+    <hr>
+    <button id="generateWorkOrderReport" class="btn btn-primary" disabled>Generate Report</button>
+    <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
+  </div>
+</div>
+
+<%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
+<script>
+ initWorkOrderTable(<%= tree.to_json.html_safe %>, "<%= url_for :controller => :work_order, :action => :generate_report %>");
+</script>
