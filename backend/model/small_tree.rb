@@ -1,7 +1,7 @@
 class SmallTree
 
   def self.for_resource(resource_id)
-    tree = Resource.get_or_die(resource_id).tree
+    tree = Resource.get_or_die(resource_id).quick_tree
     build_from(tree)
   end
 
