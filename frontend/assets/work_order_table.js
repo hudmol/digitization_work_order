@@ -180,10 +180,13 @@
                 }
             }
 
+            var offsetTop = workOrderFatTable.scroll.scrollTop;
+
             workOrderFatTable = renderTable(flattened);
 
             // navigate back to the row you just clicked
             workOrderFatTable.goTo(rowid, 0);
+            workOrderFatTable.scroll.setScrollXY(0, offsetTop);
         });
 
         $("#generateWorkOrderReport").on("click", function() {
