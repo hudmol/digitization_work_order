@@ -92,7 +92,7 @@
 
             if (j === 0) {
                 return {
-                    "content": "<input data-rowid=' "+ i +" ' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " />",
+                    "content": "<label class='work-order-item'><input data-rowid=' "+ i +" ' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " /></label>",
                     "rowId": i,
                 }
             }
@@ -100,7 +100,7 @@
             var spaces = '';
 
             for (var space = 0; space < filtered_tree[i]['level']; space++) {
-                spaces += '&nbsp;&nbsp;';
+                spaces += '<span class="work-order-space"></span>';
             }
 
             var content = spaces + filtered_tree[i]['title'];
@@ -179,7 +179,7 @@
 
             // update all children
             var level = flattened[index].level;
-            for (var i = index + 1; i < flattened.length; i ++) {
+            for (var i = index + 1; i < flattened.length; i++) {
                 if (flattened[i].level > level) {
                     flattened[i].selected = $checkbox.is(":checked");
                 } else {

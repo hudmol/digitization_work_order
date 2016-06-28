@@ -1,0 +1,12 @@
+#work_order_table {
+    white-space: nowrap;
+}
+#work_order_table .work-order-space {
+    display: inline-block;
+    width: 15px;
+    border-left: 1px dotted #DDD;
+    height: 35px;
+    float: left;
+    margin-top: -10px;
+    margin-left: 10px;
+}
