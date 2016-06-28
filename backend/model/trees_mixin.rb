@@ -26,7 +26,7 @@ module Trees
         end
 
         properties[node.id] = {
-          :title => node[:title],
+          :title => node.display_string,
           :id => node.id,
           :record_uri => self.class.uri_for(node_type, node.id),
           :publish => node.respond_to?(:publish) ? node.publish===1 : true,
