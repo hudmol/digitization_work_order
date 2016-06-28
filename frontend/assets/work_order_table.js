@@ -38,32 +38,36 @@
 
 
     var filterTree = function (tree) {
-        tree = tree.slice(0);
+        /* A stack of the ancestry of the current element.  For example, a
+           record four levels of nesting deep will have an ancestry of [0, 1, 2,
+           3], since its parent was three levels deep, its grandparent was two
+           levels, and so on. */
+        var ancestorLevels = [];
 
-        var result = [];
-        var parent_level = [];
-        while (true) {
-            if (tree.length == 0) {
-                break;
+        return tree.filter(function (elt) {
+            /* Wind back our list of ancestors to find the parent of the
+               current record.  If we go from level 5 to level 2, we've moved
+               back up the tree a couple of steps and need to discard those
+               entries. */
+            while (ancestorLevels[ancestorLevels.length - 1] >= elt.level) {
+                ancestorLevels.pop();
             }
 
-            var elt = tree.shift();
+            /* If the current record is selected, or if its parent was, we keep it.
+               Additionally, the root node is always kept. */
+            var keepRecord = (elt['level'] == 0 ||
+                              elt['selected'] ||
+                              (elt['level'] - 1) === ancestorLevels[ancestorLevels.length - 1]);
 
-            while (parent_level[parent_level.length - 1] >= elt['level']) {
-                parent_level.pop();
-            }
-
-            if (elt['level'] == 0 || elt['selected'] || (elt['level'] - 1) === parent_level[parent_level.length - 1]) {
-                result.push(elt);
-            }
-
+            /* If the current record met the criteria, record it so its children
+               are also kept. */
             if (elt['level'] == 0 || elt['selected']) {
-                parent_level.push(elt['level'])
+                ancestorLevels.push(elt['level'])
             }
-        }
 
-        return result;
-    }
+            return keepRecord;
+        });
+    };
 
 
     var renderTable = function (tree) {
