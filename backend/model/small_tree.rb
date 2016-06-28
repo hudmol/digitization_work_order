@@ -8,7 +8,11 @@ class SmallTree
   private
 
   def self.build_from(tree)
-    [tree['title']] + tree['children'].map {|child| self.build_from(child)}
+    {
+      :uri => tree['record_uri'],
+      :title => tree['title'],
+      :children => tree['children'].map { |child| self.build_from(child) }
+    }
   end
 
 end
