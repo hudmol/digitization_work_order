@@ -13,6 +13,9 @@ class WorkOrderController < ApplicationController
   end
 
   def generate_report
+    p "Work order selected URIs: "
+    p params[:selected]
+
     raise "Not implemented"
   end
 

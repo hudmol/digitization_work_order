@@ -162,7 +162,7 @@
         return table;
     }
 
-    exports.initWorkOrderTable = function (tree) {
+    exports.initWorkOrderTable = function (tree, report_url) {
         var flattened = flattenTree(tree);
 
         workOrderFatTable = renderTable(flattened);
@@ -207,6 +207,14 @@
 
             console.log("vvvvvvvv SELECTED URIS: vvvvvvvv");
             console.log(selected);
+
+
+            $.post(report_url, {
+                selected: selected
+            }, function(data) {
+                console.log(data);
+            });
+
             console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
         });
     };

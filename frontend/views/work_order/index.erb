@@ -36,5 +36,5 @@
 
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
 <script>
- initWorkOrderTable(<%= tree.to_json.html_safe %>);
+ initWorkOrderTable(<%= tree.to_json.html_safe %>, "<%= url_for :controller => :work_order, :action => :generate_report %>");
 </script>
