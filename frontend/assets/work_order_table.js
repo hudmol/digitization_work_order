@@ -36,6 +36,36 @@
         return index;
     }
 
+
+    var filterTree = function (tree) {
+        tree = tree.slice(0);
+
+        var result = [];
+        var parent_level = [];
+        while (true) {
+            if (tree.length == 0) {
+                break;
+            }
+
+            var elt = tree.shift();
+
+            while (parent_level[parent_level.length - 1] >= elt['level']) {
+                parent_level.pop();
+            }
+
+            if (elt['level'] == 0 || elt['selected'] || (elt['level'] - 1) === parent_level[parent_level.length - 1]) {
+                result.push(elt);
+            }
+
+            if (elt['level'] == 0 || elt['selected']) {
+                parent_level.push(elt['level'])
+            }
+        }
+
+        return result;
+    }
+
+
     var renderTable = function (tree) {
 
         var parents_selected = [tree[0]['selected']];
@@ -43,31 +73,8 @@
 
         var selected_count = 0;
 
-        var filtered_tree = tree.filter(function (elt) {
-            if (elt['selected']) {
-                selected_count = selected_count + 1;
-            }
-
-            var result = elt['level'] <= 1 || elt['selected'] || parents_selected[parents_selected.length - 1];
-
-            if (elt['level'] > level && elt['children']) {
-                parents_selected.push(elt['selected']);
-            } else if (elt['level'] < level) {
-                for(var i=0; i< level - elt['level']; i++) {
-                    parents_selected.pop();
-                }
-                if (elt['children']) {
-                    parents_selected.push(elt['selected']);
-                }
-            } else if (elt['level'] == level && elt['children']) {
-                parents_selected.pop();
-                parents_selected.push(elt['selected']);
-            }
-
-            level = elt['level'];
-
-            return result;
-        });
+        // We only want to keep nodes that are either: the root node, selected, the immediate child of a selected node
+        var filtered_tree = filterTree(tree);
 
         $("#selectedCount").html(selected_count);
         $("#generateWorkOrderReport").prop("disabled", selected_count == 0);
@@ -182,6 +189,7 @@
 
             var offsetTop = workOrderFatTable.scroll.scrollTop;
 
+            console.log(flattened);
             workOrderFatTable = renderTable(flattened);
 
             // navigate back to the row you just clicked
