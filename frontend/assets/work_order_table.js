@@ -71,10 +71,10 @@
         var parents_selected = [tree[0]['selected']];
         var level = tree[0]['level'];
 
-        var selected_count = 0;
-
         // We only want to keep nodes that are either: the root node, selected, the immediate child of a selected node
         var filtered_tree = filterTree(tree);
+
+        var selected_count = filtered_tree.filter(function (elt) { return elt['selected']; }).length;
 
         $("#selectedCount").html(selected_count);
         $("#generateWorkOrderReport").prop("disabled", selected_count == 0);
