@@ -10,3 +10,12 @@
     margin-top: -10px;
     margin-left: 10px;
 }
+#work_order_table .work-order-label {
+}
+#work_order_table .work-order-checkbox-label {
+    width: 100%;
+    text-align: center;
+}
+#work_order_table .work-order-has-children .work-order-label {
+    font-weight: bold;
+}

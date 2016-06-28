@@ -92,7 +92,7 @@
 
             if (j === 0) {
                 return {
-                    "content": "<label class='work-order-item'><input data-rowid=' "+ i +" ' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " /></label>",
+                    "content": "<label class='work-order-checkbox-label'><input data-rowid='"+ i +"' id='item"+i+"' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " /></label>",
                     "rowId": i,
                 }
             }
@@ -103,10 +103,10 @@
                 spaces += '<span class="work-order-space"></span>';
             }
 
-            var content = spaces + filtered_tree[i]['title'];
+            var content = '<label class="work-order-label" for="item'+i+'">' + spaces + filtered_tree[i]['title'] + '</label>';
 
             if (filtered_tree[i]['children']) {
-                content = '<b>' + content + '</b>';
+                content = '<span class="work-order-has-children">' + content + '</span>';
             }
 
             return {
