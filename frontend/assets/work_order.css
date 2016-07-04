@@ -1,13 +1,22 @@
 #work_order_table {
     white-space: nowrap;
 }
+
+#work_order_table > .fattable-body-container > div > div {
+    padding: 6px 0 0 10px;
+}
+
+#work_order_table .work-order-spaces {
+    float: left;
+    height: 200%;
+    margin-top: -10px;
+}
+
 #work_order_table .work-order-space {
     display: inline-block;
     width: 15px;
     border-left: 1px dotted #DDD;
-    height: 35px;
-    float: left;
-    margin-top: -10px;
+    height: 100%;
     margin-left: 10px;
 }
 #work_order_table .work-order-label {
@@ -18,4 +27,18 @@
 }
 #work_order_table .work-order-has-children .work-order-label {
     font-weight: bold;
+}
+
+#work_order_table .metadata-field-label {
+    font-weight: bold;
+    color: #888;
+}
+
+#work_order_table .metadata-field-label:after {
+    content: ':';
+    margin-right: 4px;
+}
+
+#work_order_table .metadata-field-value {
+    margin-right: 8px;
 }
