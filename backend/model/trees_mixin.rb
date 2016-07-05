@@ -8,14 +8,13 @@ module Trees
 
     top_nodes = []
 
+    container_info = fetch_container_info
+
     query = build_node_query
 
-    has_children = {}
-
     offset = 0
-    while true
-      now = Time.now
-      nodes = query.limit(NODE_PAGE_SIZE, offset).all
+    loop do
+      nodes = query.limit(NODE_PAGE_SIZE, offset)
 
       nodes.each do |node|
         if node.parent_id
@@ -27,12 +26,16 @@ module Trees
 
         properties[node.id] = {
           :title => node.display_string,
-          :id => node.id,
-          :record_uri => self.class.uri_for(node_type, node.id),
-          :publish => node.respond_to?(:publish) ? node.publish===1 : true,
-          :suppressed => node.respond_to?(:suppressed) ? node.suppressed===1 : false,
-          :node_type => node_type.to_s
+          :uri => self.class.uri_for(node_type, node.id),
+          :ref_id => node[:ref_id],
+          :component_id => node[:component_id],
+          :container => container_info.fetch(node.id, nil),
         }
+
+        # Drop out nils to keep the object size as small as possible
+        properties[node.id].keys.each do |key|
+          properties[node.id].delete(key) if properties[node.id][key].nil?
+        end
       end
 
       if nodes.empty?
@@ -44,14 +47,47 @@ module Trees
 
     result = {
       :title => self.title,
-      :id => self.id,
-      :node_type => root_type.to_s,
-      :publish => self.respond_to?(:publish) ? self.publish===1 : true,
-      :suppressed => self.respond_to?(:suppressed) ? self.suppressed===1 : false,
-      :children => top_nodes.sort_by(&:first).map {|position, node| self.class.assemble_tree(node, links, properties)},
-      :record_uri => self.class.uri_for(root_type, self.id)
+      :identifier => Identifiers.format(Identifiers.parse(self.identifier)),
+      :children => top_nodes.sort_by(&:first).map {|_, node| self.class.assemble_tree(node, links, properties)},
+      :uri => self.class.uri_for(root_type, self.id)
     }
 
-    JSONModel("#{self.class.root_type}_tree".intern).from_hash(result, true, true)
+    result
+  end
+
+  private
+
+  def fetch_container_info
+    result = {}
+
+    TopContainer.linked_instance_ds
+      .join(:archival_object, :id => :instance__archival_object_id)
+      .join(:enumeration_value___top_container_type, :id => :top_container__type_id)
+      .join(:enumeration_value___sub_container_type_2, :id => :sub_container__type_2_id)
+      .join(:enumeration_value___sub_container_type_3, :id => :sub_container__type_3_id)
+      .filter(:archival_object__root_record_id => self.id)
+      .select(Sequel.as(:archival_object__id, :archival_object_id),
+              Sequel.as(:top_container__barcode, :top_container_barcode),
+              Sequel.as(:top_container_type__value, :top_container_type),
+              Sequel.as(:top_container__indicator, :top_container_indicator),
+              Sequel.as(:sub_container_type_2__value, :sub_container_type_2),
+              Sequel.as(:sub_container__indicator_2, :sub_container_indicator_2),
+              Sequel.as(:sub_container_type_3__value, :sub_container_type_3),
+              Sequel.as(:sub_container__indicator_3, :sub_container_indicator_3)).each do |row|
+      result[row[:archival_object_id]] = [
+        # BoxType Indicator [Barcode]
+        [row[:top_container_type],
+         row[:top_container_indicator],
+         row[:top_container_barcode] ? ('[' + row[:top_container_barcode] + ']') : nil].compact.join(': '),
+
+        # BoxType_2 Indicator_2
+        [row[:sub_container_type_2], row[:sub_container_indicator_2]].join(': '),
+
+        # BoxType_3 Indicator_3
+        [row[:sub_container_type_3], row[:sub_container_indicator_3]].join(': '),
+      ].reject(&:empty?).join(', ')
+    end
+
+    result
   end
 end

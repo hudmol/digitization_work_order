@@ -1,11 +1,21 @@
 (function(exports) {
 
+    var TABLE_SETTINGS = {
+        row_height: 50,
+        header_height: 40,
+        column_widths: [100, 4500],
+        bottom_padding_px: 50,
+    };
+
     var flattenTree = function (tree, level) {
         if (level === undefined) {
             level = 0;
         }
 
-        var root = {'uri': tree.uri, 'title': tree.title, 'level': level, 'selected': false};
+        var root = $.extend({}, tree);
+        root['level'] = level;
+        root['selected'] = false;
+        delete root['children'];
 
         var result = [root]
 
@@ -73,7 +83,6 @@
     var renderTable = function (tree) {
 
         var parents_selected = [tree[0]['selected']];
-        var level = tree[0]['level'];
 
         // We only want to keep nodes that are either: the root node, selected, the immediate child of a selected node
         var filtered_tree = filterTree(tree);
@@ -81,13 +90,14 @@
         var selected_count = filtered_tree.filter(function (elt) { return elt['selected']; }).length;
 
         $("#selectedCount").html(selected_count);
-        $("#generateWorkOrderReport").prop("disabled", selected_count == 0);
+        $(".submit-btn").prop("disabled", selected_count === 0);
 
         $("#work_order_table").empty();
 
         var tableData = new fattable.SyncTableModel();
         tableData.getCellSync = function(i,j) {
             if (i >= filtered_tree.length) {
+                /* Past the end of the table, so we render a blank */
                 return {
                     'content': '',
                     'rowId': i,
@@ -95,19 +105,45 @@
             }
 
             if (j === 0) {
+                /* First column: render a checkbox */
                 return {
                     "content": "<label class='work-order-checkbox-label'><input data-rowid='"+ i +"' id='item"+i+"' value='"+filtered_tree[i]['uri']+"' type='checkbox' " + (filtered_tree[i]['selected'] ? "checked" : "") + " /></label>",
                     "rowId": i,
                 }
             }
 
-            var spaces = '';
+            /* Left-pad each item relative to its level */
+            var spaces = '<div class="work-order-spaces">';
 
             for (var space = 0; space < filtered_tree[i]['level']; space++) {
                 spaces += '<span class="work-order-space"></span>';
             }
 
-            var content = '<label class="work-order-label" for="item'+i+'">' + spaces + filtered_tree[i]['title'] + '</label>';
+            spaces += '</div>';
+
+            var metadata = '';
+
+            var fields = [
+                {property: 'ref_id', label: 'Ref ID'},
+                {property: 'component_id', label: 'Component ID'},
+                {property: 'identifier', label: 'Collection Identifier'},
+                {property: 'container', label: 'Container'}
+            ];
+
+            $.each(fields, function (idx, elt) {
+                if (filtered_tree[i][elt.property]) {
+                    var fragment = $('<div><span class="metadata-field-label"></span><span class="metadata-field-value"></span></div>');
+                    $(fragment).find('.metadata-field-label').text(elt.label);
+                    $(fragment).find('.metadata-field-value').text(filtered_tree[i][elt.property]);
+                    metadata += $(fragment).html();
+                }
+            });
+
+            var content = (spaces +
+                           '<div class="work-order-entry">' +
+                           '<div><label class="work-order-label" for="item'+i+'">' + filtered_tree[i]['title'] + '</label></div>' +
+                           '<div>' + metadata + '</div>' +
+                           '</div>');
 
             if (filtered_tree[i]['children']) {
                 content = '<span class="work-order-has-children">' + content + '</span>';
@@ -139,25 +175,24 @@
                 cellDiv.className = "odd";
             }
         }
+
         painter.fillCellPending = function(cellDiv, data) {
             cellDiv.textContent = "";
             cellDiv.className = "pending";
         }
 
-        var ROW_HEIGHT = 35;
-
         var table = fattable({
             "container": "#work_order_table",
             "model": tableData,
             "nbRows": filtered_tree.length,
-            "rowHeight": ROW_HEIGHT,
-            "headerHeight": 40,
+            "rowHeight": TABLE_SETTINGS.row_height,
+            "headerHeight": TABLE_SETTINGS.header_height,
             "painter": painter,
-            "columnWidths": [100, 4500]
+            "columnWidths":  TABLE_SETTINGS.column_widths
         });
 
-        var idealHeight = ROW_HEIGHT * (filtered_tree.length + 1) + 20;
-        $("#work_order_table").height(Math.min($("#work_order_table").height(), idealHeight));
+        var idealHeight = $(window).height() - $('#work_order_table').offset().top - $('#work_order_buttons').height() - TABLE_SETTINGS.bottom_padding_px;
+        $("#work_order_table").height(idealHeight);
 
         window.onresize = function() {
             table.setup();
@@ -193,7 +228,6 @@
 
             var offsetTop = workOrderFatTable.scroll.scrollTop;
 
-            console.log(flattened);
             workOrderFatTable = renderTable(flattened);
 
             // navigate back to the row you just clicked
@@ -201,7 +235,15 @@
             workOrderFatTable.scroll.setScrollXY(0, offsetTop);
         });
 
-        $("#generateWorkOrderReport").on("click", function() {
+        $(".submit-btn").on("click", function() {
+            var self = $(this);
+
+            var additional_options = {};
+
+            $('.additional-options input[type="checkbox"]').each(function (idx, checkbox) {
+                additional_options[$(checkbox).prop('name')] = $(checkbox).is(':checked')
+            });
+
             var selected = [];
             $.each(flattened, function(i, elt) {
                 if (elt['selected']) {
@@ -209,17 +251,14 @@
                 }
             });
 
-            console.log("vvvvvvvv SELECTED URIS: vvvvvvvv");
-            console.log(selected);
-
-
             $.post(report_url, {
-                selected: selected
+                selected: selected,
+                report_type: self.prop('id'),
+                additional_options: additional_options,
             }, function(data) {
+                /* FIXME */
                 console.log(data);
             });
-
-            console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
         });
     };
 })(window);
