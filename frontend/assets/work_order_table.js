@@ -90,7 +90,7 @@
         var selected_count = filtered_tree.filter(function (elt) { return elt['selected']; }).length;
 
         $("#selectedCount").html(selected_count);
-        $("#generateWorkOrderReport").prop("disabled", selected_count === 0);
+        $(".submit-btn").prop("disabled", selected_count === 0);
 
         $("#work_order_table").empty();
 
@@ -235,7 +235,15 @@
             workOrderFatTable.scroll.setScrollXY(0, offsetTop);
         });
 
-        $("#generateWorkOrderReport").on("click", function() {
+        $(".submit-btn").on("click", function() {
+            var self = $(this);
+
+            var additional_options = {};
+
+            $('.additional-options input[type="checkbox"]').each(function (idx, checkbox) {
+                additional_options[$(checkbox).prop('name')] = $(checkbox).is(':checked')
+            });
+
             var selected = [];
             $.each(flattened, function(i, elt) {
                 if (elt['selected']) {
@@ -243,17 +251,14 @@
                 }
             });
 
-            console.log("vvvvvvvv SELECTED URIS: vvvvvvvv");
-            console.log(selected);
-
-
             $.post(report_url, {
-                selected: selected
+                selected: selected,
+                report_type: self.prop('id'),
+                additional_options: additional_options,
             }, function(data) {
+                /* FIXME */
                 console.log(data);
             });
-
-            console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
         });
     };
 })(window);

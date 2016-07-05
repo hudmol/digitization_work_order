@@ -42,3 +42,8 @@
 #work_order_table .metadata-field-value {
     margin-right: 8px;
 }
+
+#work_order_buttons .additional-options legend {
+    padding-top: 10px;
+    margin-bottom: 0;
+}

@@ -11,9 +11,23 @@
   <div id='work_order_table'></div>
 
   <div id='work_order_buttons'>
-    <hr>
-    <button id="generateWorkOrderReport" class="btn btn-primary" disabled>Generate Report</button>
-    <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
+    <div class="form-group">
+      <form class="form-inline">
+        <fieldset class="form-group additional-options">
+          <legend>Additional options</legend>
+          <label class="checkbox-inline" for="series_title"><input type="checkbox" id="series_title" name="series_title">Series title</label>
+          <label class="checkbox-inline" for="subseries_title"><input type="checkbox" id="subseries_title" name="subseries_title">Subseries title</label>
+          <label class="checkbox-inline" for="barcode"><input type="checkbox" id="barcode" name="barcode">Barcode</label>
+          <label class="checkbox-inline" for="dates"><input type="checkbox" id="dates" name="dates">Date(s)</label>
+        </fieldset>
+      </form>
+    </div>
+
+    <div class="form-group">
+      <button id="generateWorkOrder" class="btn btn-primary submit-btn" disabled>Generate Work Order</button>
+      <button id="generateReport" class="btn btn-primary submit-btn" disabled>Generate Report</button>
+      <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
+    </div>
   </div>
 </div>
 
