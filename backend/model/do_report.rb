@@ -6,6 +6,11 @@ class DOReport
     {:header => "Resource ID",          :proc => Proc.new {|resource, ao| resource_id(resource)}},
     {:header => "Ref ID",               :proc => Proc.new {|resource, ao| ref_id(ao)}},
     {:header => "URI",                  :proc => Proc.new {|resource, ao| record_uri(ao)}},
+    {:header => "Indicator 1",          :proc => Proc.new {|resource, ao, box| indicator_1(box)}},
+    {:header => "Indicator 2",          :proc => Proc.new {|resource, ao, box| indicator_2(box)}},
+    {:header => "Indicator 3",          :proc => Proc.new {|resource, ao, box| indicator_3(box)}},
+    {:header => "Title",                :proc => Proc.new {|resource, ao| record_title(ao)}},
+    {:header => "Component ID",         :proc => Proc.new {|resource, ao| component_id(ao)}},
   ]
 
 
@@ -37,7 +42,7 @@ class DOReport
 
 
   def add_row_to_report(row)
-    @tsv += generate_line(COLUMNS.map {|col| col[:proc].call(row["resource"]["_resolved"], row)})
+    @tsv += generate_line(COLUMNS.map {|col| col[:proc].call(row["resource"]["_resolved"], row, row["instances"][0]["sub_container"])})
   end
 
 
@@ -59,6 +64,26 @@ class DOReport
 
   def self.ref_id(ao)
     ao['ref_id']
+  end
+
+
+  def self.indicator_1(box)
+    box['top_container']['_resolved']['indicator']
+  end
+
+
+  def self.indicator_2(box)
+    box['indicator_2']
+  end
+
+
+  def self.indicator_3(box)
+    box['indicator_3']
+  end
+
+
+  def self.component_id(ao)
+    ao['component_id']
   end
 
 end

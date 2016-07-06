@@ -11,7 +11,7 @@ class ArchivesSpaceService < Sinatra::Base
     rows = params[:uri].map do |uri|
       parsed = JSONModel.parse_reference(uri)
       if parsed[:type] == "archival_object"
-        resolve_references(ArchivalObject.to_jsonmodel(ArchivalObject.get_or_die(parsed[:id])), ["resource"])
+        resolve_references(ArchivalObject.to_jsonmodel(ArchivalObject.get_or_die(parsed[:id])), ["resource", "top_container"])
       end
     end
 
