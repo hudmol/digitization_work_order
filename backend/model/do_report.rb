@@ -2,27 +2,50 @@ require 'csv'
 
 class DOReport
 
-  COLUMNS = [
-    {:header => "Resource ID",          :proc => Proc.new {|resource, ao| resource_id(resource)}},
-    {:header => "Ref ID",               :proc => Proc.new {|resource, ao| ref_id(ao)}},
-    {:header => "URI",                  :proc => Proc.new {|resource, ao| record_uri(ao)}},
-    {:header => "Indicator 1",          :proc => Proc.new {|resource, ao, box| indicator_1(box)}},
-    {:header => "Indicator 2",          :proc => Proc.new {|resource, ao, box| indicator_2(box)}},
-    {:header => "Indicator 3",          :proc => Proc.new {|resource, ao, box| indicator_3(box)}},
-    {:header => "Title",                :proc => Proc.new {|resource, ao| record_title(ao)}},
-    {:header => "Component ID",         :proc => Proc.new {|resource, ao| component_id(ao)}},
+  BASE_COLUMNS = [
+    {:header => "Resource ID",          :proc => Proc.new {|resource, item| resource_id(resource)}},
+    {:header => "Ref ID",               :proc => Proc.new {|resource, item| ref_id(item)}},
+    {:header => "URI",                  :proc => Proc.new {|resource, item| record_uri(item)}},
+    {:header => "Indicator 1",          :proc => Proc.new {|resource, item, box| indicator_1(box)}},
+    {:header => "Indicator 2",          :proc => Proc.new {|resource, item, box| indicator_2(box)}},
+    {:header => "Indicator 3",          :proc => Proc.new {|resource, item, box| indicator_3(box)}},
+    {:header => "Title",                :proc => Proc.new {|resource, item| record_title(item)}},
+    {:header => "Component ID",         :proc => Proc.new {|resource, item| component_id(item)}},
   ]
 
+  SERIES_COLUMNS = [
+    {:header => "Series",               :proc => Proc.new {|resource, item, box, series| record_title(series)}}
+  ]
 
-  def initialize(rows)
+  SUBSERIES_COLUMNS = [
+    {:header => "Sub-Series",           :proc => Proc.new {|resource, item, box, series, subseries| record_title(subseries)}}
+  ]
+
+  BARCODE_COLUMNS = [
+    {:header => "Barcode",              :proc => Proc.new {|resource, item, box| barcode(box)}}
+  ]
+
+  DATES_COLUMNS = [
+    {:header => "Dates",                :proc => Proc.new {|resource, item| dates(item)}}
+  ]
+
+  def initialize(rows, opts = {})
     @rows = rows
     @tsv = ''
+
+    extras = allowed_extras.select { |e| opts.fetch(:extras) { [] }.include?(e) }
+
+    @columns = BASE_COLUMNS
+
+    extras.each do |extra|
+      @columns += self.class.const_get(extra.upcase + '_COLUMNS')
+    end
 
     build_report
   end
 
   def to_stream
-#    @tsv.to_stream
+    #    @tsv.to_stream
     @tsv
   end
 
@@ -33,7 +56,7 @@ class DOReport
   end
 
   def build_report
-    @tsv = generate_line(COLUMNS.map {|col| col[:header]})
+    @tsv = generate_line(@columns.map {|col| col[:header]})
 
     @rows.each do |row|
       add_row_to_report(row)
@@ -41,8 +64,28 @@ class DOReport
   end
 
 
+  def allowed_extras
+    ['series', 'subseries', 'barcode', 'dates']
+  end
+
+  def empty_row
+    {
+      'resource' => {},
+      'item' => {},
+      'box' => {},
+      'series' => {},
+      'subseries' => {},
+    }
+  end
+
+
   def add_row_to_report(row)
-    @tsv += generate_line(COLUMNS.map {|col| col[:proc].call(row["resource"]["_resolved"], row, row["instances"][0]["sub_container"])})
+    mrow = empty_row.merge(row)
+    @tsv += generate_line(@columns.map {|col| col[:proc].call(mrow['resource']['_resolved'],
+                                                              mrow['item'],
+                                                              mrow['box'],
+                                                              mrow['series']['_resolved'],
+                                                              mrow['subseries']['_resolved'])})
   end
 
 
@@ -62,13 +105,22 @@ class DOReport
   end
 
 
-  def self.ref_id(ao)
-    ao['ref_id']
+  def self.ref_id(item)
+    item['ref_id']
   end
 
 
   def self.indicator_1(box)
-    box['top_container']['_resolved']['indicator']
+    if box['top_container']
+      box['top_container']['_resolved']['indicator']
+    end
+  end
+
+
+  def self.barcode(box)
+    if box['top_container']
+      box['top_container']['_resolved']['barcode']
+    end
   end
 
 
@@ -82,8 +134,16 @@ class DOReport
   end
 
 
-  def self.component_id(ao)
-    ao['component_id']
+  def self.component_id(item)
+    item['component_id']
+  end
+
+
+  def self.dates(item)
+    item['dates'].map { |date|
+      dates = [date['begin'], date['end']].compact.join(' -- ')
+      "#{date['label']}: #{dates}"
+    }.join('; ')
   end
 
 end
