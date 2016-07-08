@@ -1,4 +1,5 @@
 require 'csv'
+require_relative 'id_generators/generator_interface'
 
 class DOReport
 
@@ -34,11 +35,23 @@ class DOReport
 
   def initialize(uris, opts = {})
     @uris = uris
+    @generate_ids = opts[:generate_ids]
 
-    @extras = allowed_extras.select { |e| opts.fetch(:extras) { [] }.include?(e) }
+    if @generate_ids
+      Dir.glob(base_dir("id_generators/*.rb")).each do |file|
+        require(File.absolute_path(file))
+      end
+
+      generator_class = 'DefaultGenerator'
+      if AppConfig.has_key?(:digitization_work_order_id_generator) 
+        generator_class = AppConfig[:digitization_work_order_id_generator]
+      end
+
+      @id_generator = Kernel.const_get(generator_class).new
+    end
 
     @columns = BASE_COLUMNS
-
+    @extras = allowed_extras.select { |e| opts.fetch(:extras) { [] }.include?(e) }
     @extras.each do |extra|
       @columns += self.class.const_get(extra.upcase + '_COLUMNS')
     end
@@ -64,6 +77,16 @@ class DOReport
   private
 
 
+  def base_dir(path = nil)
+    base = File.absolute_path(File.dirname(__FILE__))
+    if path
+      File.join(base, path)
+    else
+      base
+    end
+  end
+
+
   def build_items
     @items = []
     @uris.each do |uri|
@@ -76,6 +99,10 @@ class DOReport
 
       # only leaves
       next if ArchivalObject.where(:parent_id => ao[:id]).count > 0
+
+      if @generate_ids && !ao.component_id
+        ao = generate_id(ao)
+      end
 
       item = {'item' => ArchivalObject.to_jsonmodel(ao)}
       item['resource'] = item['item']['resource']
@@ -100,6 +127,13 @@ class DOReport
 
       @items << item
     end
+  end
+
+
+  def generate_id(ao)
+    ao[:component_id] = @id_generator.generate(ao)
+    ao.save(:columns => [:component_id, :system_mtime])
+    ao
   end
 
 
