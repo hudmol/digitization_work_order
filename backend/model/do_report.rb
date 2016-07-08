@@ -70,7 +70,7 @@ class DOReport
 
 
   def to_stream
-    @tsv
+    StringIO.new(@tsv)
   end
 
 

@@ -238,10 +238,12 @@
         $(".submit-btn").on("click", function() {
             var self = $(this);
 
-            var additional_options = {};
+            var extras = [];
 
             $('.additional-options input[type="checkbox"]').each(function (idx, checkbox) {
-                additional_options[$(checkbox).prop('name')] = $(checkbox).is(':checked')
+		    if ($(checkbox).is(':checked')) {
+			extras.push($(checkbox).prop('name'));
+			    }
             });
 
             var selected = [];
@@ -251,14 +253,31 @@
                 }
             });
 
-            $.post(report_url, {
-                selected: selected,
-                report_type: self.prop('id'),
-                additional_options: additional_options,
-            }, function(data) {
-                /* FIXME */
-                console.log(data);
-            });
+	    var form = $("<form>", { "action": report_url, "method": "POST" });
+
+	    $(form).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "selected")
+			   .val(JSON.stringify(selected))
+			   );
+
+	    $(form).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "report_type")
+			   .val(self.prop('id'))
+			   );
+
+	    $(form).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "extras")
+			   .val(JSON.stringify(extras))
+			   );
+
+	    $(form).submit();
+
         });
     };
 })(window);
