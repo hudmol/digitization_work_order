@@ -2,6 +2,8 @@ require 'csv'
 
 class DOReport
 
+  attr_reader :items
+
   BASE_COLUMNS = [
     {:header => "Resource ID",          :proc => Proc.new {|resource, item| resource_id(resource)}},
     {:header => "Ref ID",               :proc => Proc.new {|resource, item| ref_id(item)}},
@@ -29,31 +31,104 @@ class DOReport
     {:header => "Dates",                :proc => Proc.new {|resource, item| dates(item)}}
   ]
 
-  def initialize(rows, opts = {})
-    @rows = rows
-    @tsv = ''
 
-    extras = allowed_extras.select { |e| opts.fetch(:extras) { [] }.include?(e) }
+  def initialize(uris, opts = {})
+    @uris = uris
+
+    @extras = allowed_extras.select { |e| opts.fetch(:extras) { [] }.include?(e) }
 
     @columns = BASE_COLUMNS
 
-    extras.each do |extra|
+    @extras.each do |extra|
       @columns += self.class.const_get(extra.upcase + '_COLUMNS')
     end
 
-    build_report
+    build_items
   end
 
+
+  def build(rows)
+    @rows = rows
+
+    build_report
+
+    self
+  end
+
+
   def to_stream
-    #    @tsv.to_stream
     @tsv
   end
 
+
   private
+
+
+  def build_items
+    @items = []
+    @uris.each do |uri|
+      parsed = JSONModel.parse_reference(uri)
+
+      # only archival_objects
+      next unless parsed[:type] == "archival_object"
+
+      ao = ArchivalObject[parsed[:id]]
+
+      # only leaves
+      next if ArchivalObject.where(:parent_id => ao[:id]).count > 0
+
+      item = {'item' => ArchivalObject.to_jsonmodel(ao)}
+      item['resource'] = item['item']['resource']
+
+      if @extras.include?('series') || @extras.include?('subseries')
+        (series, subseries) = find_ancestors(ao)
+        if series
+          item['series'] = {'ref' => series.uri}
+        end
+
+        if subseries
+          item['subseries'] = {'ref' => subseries.uri}
+        end
+      end
+
+      item['item']['instances'].each do |instance|
+        if instance['sub_container']
+          item['box'] = instance['sub_container']
+          break
+        end
+      end
+
+      @items << item
+    end
+  end
+
+
+  def find_ancestors(ao)
+    subseries = nil
+    series = nil
+
+    while true
+      if ao[:parent_id].nil?
+        break
+      end
+      ao = ArchivalObject[ao[:parent_id]]
+      if ao.level == 'subseries'
+        subseries = ao
+      end
+      if ao.level == 'series'
+        series = ao
+        break
+      end
+    end
+
+    return series, subseries
+  end
+
 
   def generate_line(data)
     CSV.generate_line(data, :col_sep => "\t")
   end
+
 
   def build_report
     @tsv = generate_line(@columns.map {|col| col[:header]})
@@ -67,6 +142,7 @@ class DOReport
   def allowed_extras
     ['series', 'subseries', 'barcode', 'dates']
   end
+
 
   def empty_row
     {
