@@ -37,7 +37,7 @@ class WorkOrderController < ApplicationController
 
           queue << :ok
           report_response.read_body do |chunk|
-            queue << chunk
+            queue << chunk unless chunk.empty?
           end
         end
       rescue
