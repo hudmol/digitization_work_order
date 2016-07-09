@@ -17,11 +17,15 @@ class DOReport
   ]
 
   SERIES_COLUMNS = [
-    {:header => "Series",               :proc => Proc.new {|resource, item, box, series| record_title(series)}}
+    {:header => "Series",               :proc => Proc.new { |resource, item, box, series|
+                                                             series ? record_title(series) : ''
+                                                          }}
   ]
 
   SUBSERIES_COLUMNS = [
-    {:header => "Sub-Series",           :proc => Proc.new {|resource, item, box, series, subseries| record_title(subseries)}}
+    {:header => "Sub-Series",           :proc => Proc.new { |resource, item, box, series, subseries|
+                                                             subseries ? record_title(subseries) : ''
+                                                          }}
   ]
 
   BARCODE_COLUMNS = [
