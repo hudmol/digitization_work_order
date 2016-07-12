@@ -138,10 +138,8 @@ class DOReport
 
 
   def get_dates(ids)
-    date_start = Time.now
     dates = {}
     DB.open do |db|
-      date_start = Time.now
       db[:date]
         .join(:enumeration_value___label, :id => :label_id)
         .where(:archival_object_id => ids)
@@ -155,13 +153,11 @@ class DOReport
         dates[date[:archival_object_id]] << date
       end
     end
-    @date_time = Time.now - date_start
     dates
   end
 
 
   def find_ancestors(ao)
-    start = Time.now
     @visited_aos ||= {}
     subseries = nil
     series = nil
@@ -185,9 +181,6 @@ class DOReport
       end
     end
 
-    finish = Time.now
-    @time_in_here ||= 0.0
-    @time_in_here += finish - start
     return series, subseries, all
   end
 
