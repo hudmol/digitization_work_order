@@ -5,6 +5,12 @@
 
   <h1>Work Order Form</h1>
 
+  <% if @report_errors %>
+    <div class="alert alert-danger">
+      <%= @report_errors %>
+    </div>
+  <% end %>
+
   <p><strong>Resource: </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)</p>
   <p><strong>Records Selected: </strong> <span id="selectedCount"></span></p>
 
@@ -15,8 +21,8 @@
       <form class="form-inline">
         <fieldset class="form-group additional-options">
           <legend>Additional options</legend>
-          <label class="checkbox-inline" for="series_title"><input type="checkbox" id="series_title" name="series_title">Series title</label>
-          <label class="checkbox-inline" for="subseries_title"><input type="checkbox" id="subseries_title" name="subseries_title">Subseries title</label>
+          <label class="checkbox-inline" for="series"><input type="checkbox" id="series" name="series">Series title</label>
+          <label class="checkbox-inline" for="subseries"><input type="checkbox" id="subseries" name="subseries">Subseries title</label>
           <label class="checkbox-inline" for="barcode"><input type="checkbox" id="barcode" name="barcode">Barcode</label>
           <label class="checkbox-inline" for="dates"><input type="checkbox" id="dates" name="dates">Date(s)</label>
         </fieldset>
@@ -31,7 +37,12 @@
   </div>
 </div>
 
+<%= form_tag({:controller => :work_order, :action => :generate_report}, {:method => 'post', :id => "work_order_form"}) do |form| %>
+  <%= hidden_field_tag "resource", @uri %>
+  <div class="report-fields"></div>
+<% end %>
+
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
 <script>
- initWorkOrderTable(<%= ASUtils.to_json(@tree).html_safe %>, "<%= url_for :controller => :work_order, :action => :generate_report %>");
+ initWorkOrderTable(<%= ASUtils.to_json(@tree).html_safe %>);
 </script>

@@ -191,7 +191,7 @@
             "columnWidths":  TABLE_SETTINGS.column_widths
         });
 
-        var idealHeight = $(window).height() - $('#work_order_table').offset().top - $('#work_order_buttons').height() - TABLE_SETTINGS.bottom_padding_px;
+        var idealHeight = $(window).height() - $('#work_order_buttons').height() - TABLE_SETTINGS.bottom_padding_px;
         $("#work_order_table").height(idealHeight);
 
         window.onresize = function() {
@@ -201,7 +201,7 @@
         return table;
     }
 
-    exports.initWorkOrderTable = function (tree, report_url) {
+    exports.initWorkOrderTable = function (tree) {
         var flattened = flattenTree(tree);
 
         workOrderFatTable = renderTable(flattened);
@@ -238,10 +238,12 @@
         $(".submit-btn").on("click", function() {
             var self = $(this);
 
-            var additional_options = {};
+            var extras = [];
 
             $('.additional-options input[type="checkbox"]').each(function (idx, checkbox) {
-                additional_options[$(checkbox).prop('name')] = $(checkbox).is(':checked')
+		    if ($(checkbox).is(':checked')) {
+			extras.push($(checkbox).prop('name'));
+			    }
             });
 
             var selected = [];
@@ -251,14 +253,32 @@
                 }
             });
 
-            $.post(report_url, {
-                selected: selected,
-                report_type: self.prop('id'),
-                additional_options: additional_options,
-            }, function(data) {
-                /* FIXME */
-                console.log(data);
-            });
+	    var form = $("#work_order_form");
+	    var form_fields = form.find(".report-fields").empty();
+
+	    $(form_fields).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "selected")
+			   .val(JSON.stringify(selected))
+			   );
+
+	    $(form_fields).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "report_type")
+			   .val(self.prop('id'))
+			   );
+
+	    $(form_fields).append(
+			   $("<input>")
+			   .attr("type", "hidden")
+			   .attr("name", "extras")
+			   .val(JSON.stringify(extras))
+			   );
+
+	    $(form).submit();
+
         });
     };
 })(window);
