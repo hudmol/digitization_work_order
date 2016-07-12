@@ -2,8 +2,6 @@ require 'cgi'
 
 class WorkOrderController < ApplicationController
 
-  skip_before_filter  :verify_authenticity_token
-
   set_access_control "view_repository" => [:index, :generate_report]
 
   def index
@@ -50,6 +48,9 @@ class WorkOrderController < ApplicationController
     first_on_queue = queue.pop # :ok or error hash
     if first_on_queue.kind_of?(Hash)
       @report_errors = first_on_queue[:error]
+
+      @uri = params[:resource]
+      @tree = escape_xml_characters(load_tree)
 
       return render :action => :index
     end

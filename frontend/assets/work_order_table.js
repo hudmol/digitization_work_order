@@ -191,7 +191,7 @@
             "columnWidths":  TABLE_SETTINGS.column_widths
         });
 
-        var idealHeight = $(window).height() - $('#work_order_table').offset().top - $('#work_order_buttons').height() - TABLE_SETTINGS.bottom_padding_px;
+        var idealHeight = $(window).height() - $('#work_order_buttons').height() - TABLE_SETTINGS.bottom_padding_px;
         $("#work_order_table").height(idealHeight);
 
         window.onresize = function() {
@@ -201,7 +201,7 @@
         return table;
     }
 
-    exports.initWorkOrderTable = function (tree, report_url) {
+    exports.initWorkOrderTable = function (tree) {
         var flattened = flattenTree(tree);
 
         workOrderFatTable = renderTable(flattened);
@@ -253,23 +253,24 @@
                 }
             });
 
-	    var form = $("<form>", { "action": report_url, "method": "POST" });
+	    var form = $("#work_order_form");
+	    var form_fields = form.find(".report-fields").empty();
 
-	    $(form).append(
+	    $(form_fields).append(
 			   $("<input>")
 			   .attr("type", "hidden")
 			   .attr("name", "selected")
 			   .val(JSON.stringify(selected))
 			   );
 
-	    $(form).append(
+	    $(form_fields).append(
 			   $("<input>")
 			   .attr("type", "hidden")
 			   .attr("name", "report_type")
 			   .val(self.prop('id'))
 			   );
 
-	    $(form).append(
+	    $(form_fields).append(
 			   $("<input>")
 			   .attr("type", "hidden")
 			   .attr("name", "extras")
