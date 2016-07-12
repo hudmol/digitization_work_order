@@ -90,6 +90,7 @@
         var selected_count = filtered_tree.filter(function (elt) { return elt['selected']; }).length;
 
         $("#selectedCount").html(selected_count);
+        $("#selectedCountInModal").html(selected_count);
         $(".submit-btn").prop("disabled", selected_count === 0);
 
         $("#work_order_table").empty();
@@ -235,8 +236,26 @@
             workOrderFatTable.scroll.setScrollXY(0, offsetTop);
         });
 
+
+        $("#cancelWorkOrder").on("click", function(event) {
+	    event.preventDefault();
+	    $(".modal_overlay").hide();
+	    $(".work_order_modal").hide();
+	});
+
         $(".submit-btn").on("click", function() {
             var self = $(this);
+
+	    if (self.attr('id') == 'showWorkOrderModal') {
+		$(".modal_overlay").show();
+		$(".work_order_modal").show();
+		return;
+	    }
+
+	    if (self.attr('id') == 'downloadWorkOrder') {
+		$(".modal_overlay").hide();
+		$(".work_order_modal").hide();
+	    }
 
             var extras = [];
 

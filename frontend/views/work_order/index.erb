@@ -30,8 +30,8 @@
     </div>
 
     <div class="form-group">
-      <button id="generateWorkOrder" class="btn btn-primary submit-btn" disabled>Generate Work Order</button>
-      <button id="generateReport" class="btn btn-primary submit-btn" disabled>Generate Report</button>
+      <button id="showWorkOrderModal" class="btn btn-primary submit-btn" disabled>Download Work Order ...</button>
+      <button id="generateReport" class="btn btn-primary submit-btn" disabled>Download Report</button>
       <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
     </div>
   </div>
@@ -40,6 +40,22 @@
 <%= form_tag({:controller => :work_order, :action => :generate_report}, {:method => 'post', :id => "work_order_form"}) do |form| %>
   <%= hidden_field_tag "resource", @uri %>
   <div class="report-fields"></div>
+
+  <div class="modal_overlay"></div>
+
+  <div class="work_order_modal">
+    <h3>Confirm Work Order Download</h3>
+    <hr/>
+    <p><strong>Resource: </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)</p>
+    <p><strong>Records Selected: </strong> <span id="selectedCountInModal"></span></p>
+    <hr/>
+    <p>Downloading a Work Order will cause component ids to be generated for items in the work order that don't currently have one.</p>
+    <p><b>Records may be updated.</b></p>
+    <hr/>
+    <button id="downloadWorkOrder" class="btn btn-primary submit-btn">Download Work Order</button>
+    <button id="cancelWorkOrder" class="btn btn-default">Cancel</button>
+  </div>
+
 <% end %>
 
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
