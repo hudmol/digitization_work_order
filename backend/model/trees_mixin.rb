@@ -55,11 +55,32 @@ module Trees
     result
   end
 
+
+  def quick_containers
+    result = {}
+    containers_ds.each do |row|
+      fields = {}
+      fields[:top_container] = {
+        :type => row[:top_container_type],
+        :indicator => row[:top_container_indicator],
+        :barcode => row[:top_container_barcode]
+      }
+      fields[:sub_container] = {
+        :type_2 => row[:sub_container_type_2],
+        :indicator_2 => row[:sub_container_indicator_2],
+        :type_3 => row[:sub_container_type_3],
+        :indicator_3 => row[:sub_container_indicator_3],
+      }
+      result[row[:archival_object_id]] = fields
+      
+    end
+    result
+  end
+
+
   private
 
-  def fetch_container_info
-    result = {}
-
+  def containers_ds
     TopContainer.linked_instance_ds
       .join(:archival_object, :id => :instance__archival_object_id)
       .join(:enumeration_value___top_container_type, :id => :top_container__type_id)
@@ -73,7 +94,14 @@ module Trees
               Sequel.as(:sub_container_type_2__value, :sub_container_type_2),
               Sequel.as(:sub_container__indicator_2, :sub_container_indicator_2),
               Sequel.as(:sub_container_type_3__value, :sub_container_type_3),
-              Sequel.as(:sub_container__indicator_3, :sub_container_indicator_3)).each do |row|
+              Sequel.as(:sub_container__indicator_3, :sub_container_indicator_3))
+  end
+
+
+  def fetch_container_info
+    result = {}
+
+    containers_ds.each do |row|
       result[row[:archival_object_id]] = [
         # BoxType Indicator [Barcode]
         [row[:top_container_type],

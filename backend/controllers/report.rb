@@ -13,20 +13,13 @@ class ArchivesSpaceService < Sinatra::Base
     opts[:extras] = params[:extras] || []
     opts[:generate_ids] = params[:generate_ids] || false
 
-    resolve = ['resource', 'top_container']
-
-    resolve << 'series' if opts[:extras].include?('series')
-    resolve << 'subseries' if opts[:extras].include?('subseries')
-
-    report = DOReport.new(params[:uri], opts)
-
     [
       200,
       {
         "Content-Type" => "text/tab-separated-values",
         "Content-Disposition" => "attachment; filename=\"digitization_work_order_report.tsv\""
       },
-      report.build(resolve_references(report.items, resolve)).to_stream
+      DOReport.new(params[:uri], opts).to_stream
     ]
   end
 
