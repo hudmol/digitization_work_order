@@ -5,6 +5,12 @@
 
   <h1>Work Order Form</h1>
 
+  <% if @report_errors %>
+    <div class="alert alert-danger">
+      <%= @report_errors %>
+    </div>
+  <% end %>
+
   <p><strong>Resource: </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)</p>
   <p><strong>Records Selected: </strong> <span id="selectedCount"></span></p>
 
@@ -32,6 +38,7 @@
 </div>
 
 <%= form_tag({:controller => :work_order, :action => :generate_report}, {:method => 'post', :id => "work_order_form"}) do |form| %>
+  <%= hidden_field_tag "resource", @uri %>
   <div class="report-fields"></div>
 <% end %>
 

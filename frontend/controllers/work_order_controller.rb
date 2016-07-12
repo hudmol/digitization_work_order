@@ -49,6 +49,9 @@ class WorkOrderController < ApplicationController
     if first_on_queue.kind_of?(Hash)
       @report_errors = first_on_queue[:error]
 
+      @uri = params[:resource]
+      @tree = escape_xml_characters(load_tree)
+
       return render :action => :index
     end
 
