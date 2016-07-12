@@ -31,7 +31,11 @@
   </div>
 </div>
 
+<%= form_tag({:controller => :work_order, :action => :generate_report}, {:method => 'post', :id => "work_order_form"}) do |form| %>
+  <div class="report-fields"></div>
+<% end %>
+
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
 <script>
- initWorkOrderTable(<%= ASUtils.to_json(@tree).html_safe %>, "<%= url_for :controller => :work_order, :action => :generate_report %>");
+ initWorkOrderTable(<%= ASUtils.to_json(@tree).html_safe %>);
 </script>
