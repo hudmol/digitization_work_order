@@ -14,7 +14,7 @@ class WorkOrderController < ApplicationController
 
     extras = JSON.parse(params[:extras])
 
-    generate_ids = params[:report_type] == 'generateWorkOrder'
+    generate_ids = params[:report_type] == 'downloadWorkOrder'
 
     queue = Queue.new
 
