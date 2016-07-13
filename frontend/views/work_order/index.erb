@@ -3,7 +3,7 @@
 
 <div class="record-pane">
 
-  <h1>Work Order Form</h1>
+  <h1><%= I18n.t("plugins.digitization_work_order.form_title") %></h1>
 
   <% if @report_errors %>
     <div class="alert alert-danger">
@@ -11,8 +11,14 @@
     </div>
   <% end %>
 
-  <p><strong>Resource: </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)</p>
-  <p><strong>Records Selected: </strong> <span id="selectedCount"></span></p>
+  <p>
+    <strong><%= I18n.t("plugins.digitization_work_order.resource") %>:
+    </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)
+  </p>
+  <p>
+    <strong><%= I18n.t("plugins.digitization_work_order.records_selected") %>:
+    </strong> <span id="selectedCount"></span>
+  </p>
 
   <div id='work_order_table'></div>
 
@@ -20,19 +26,31 @@
     <div class="form-group">
       <form class="form-inline">
         <fieldset class="form-group additional-options">
-          <legend>Additional options</legend>
-          <label class="checkbox-inline" for="series"><input type="checkbox" id="series" name="series">Series title</label>
-          <label class="checkbox-inline" for="subseries"><input type="checkbox" id="subseries" name="subseries">Subseries title</label>
-          <label class="checkbox-inline" for="barcode"><input type="checkbox" id="barcode" name="barcode">Barcode</label>
-          <label class="checkbox-inline" for="dates"><input type="checkbox" id="dates" name="dates">Date(s)</label>
+          <legend><%= I18n.t("plugins.digitization_work_order.additional_options") %></legend>
+          <label class="checkbox-inline" for="series"><input type="checkbox" id="series" name="series">
+            <%= I18n.t("plugins.digitization_work_order.series_title") %>
+          </label>
+          <label class="checkbox-inline" for="subseries"><input type="checkbox" id="subseries" name="subseries">
+            <%= I18n.t("plugins.digitization_work_order.subseries_title") %>
+          </label>
+          <label class="checkbox-inline" for="barcode"><input type="checkbox" id="barcode" name="barcode">
+            <%= I18n.t("plugins.digitization_work_order.barcode") %>
+          </label>
+          <label class="checkbox-inline" for="dates"><input type="checkbox" id="dates" name="dates">
+            <%= I18n.t("plugins.digitization_work_order.dates") %>
+          </label>
         </fieldset>
       </form>
     </div>
 
     <div class="form-group">
-      <button id="generateWorkOrder" class="btn btn-primary submit-btn" disabled>Generate Work Order</button>
-      <button id="generateReport" class="btn btn-primary submit-btn" disabled>Generate Report</button>
-      <%= link_to 'Cancel',:back, :class => "btn btn-default" %>
+      <button id="showWorkOrderModal" class="btn btn-primary submit-btn" disabled>
+        <%= I18n.t("plugins.digitization_work_order.show_work_order_modal_button") %>
+      </button>
+      <button id="generateReport" class="btn btn-primary submit-btn" disabled>
+        <%= I18n.t("plugins.digitization_work_order.download_report_button") %>
+      </button>
+      <%= link_to I18n.t("plugins.digitization_work_order.cancel_button"),:back, :class => "btn btn-default" %>
     </div>
   </div>
 </div>
@@ -40,6 +58,30 @@
 <%= form_tag({:controller => :work_order, :action => :generate_report}, {:method => 'post', :id => "work_order_form"}) do |form| %>
   <%= hidden_field_tag "resource", @uri %>
   <div class="report-fields"></div>
+
+  <div class="modal_overlay"></div>
+
+  <div class="work_order_modal">
+    <h3><%= I18n.t("plugins.digitization_work_order.modal.title") %></h3>
+    <hr/>
+    <p><strong><%= I18n.t("plugins.digitization_work_order.resource") %>:
+      </strong> <%= @tree['title'] %> (<%= @tree['identifier'] %>)
+    </p>
+    <p><strong><%= I18n.t("plugins.digitization_work_order.records_selected") %>:
+      </strong> <span id="selectedCountInModal"></span>
+    </p>
+    <hr/>
+    <p><%= I18n.t("plugins.digitization_work_order.modal.message") %></p>
+    <p><strong><%= I18n.t("plugins.digitization_work_order.modal.warning") %></strong></p>
+    <hr/>
+    <button id="downloadWorkOrder" class="btn btn-primary submit-btn">
+      <%= I18n.t("plugins.digitization_work_order.modal.download_button") %>
+    </button>
+    <button id="cancelWorkOrder" class="btn btn-default">
+      <%= I18n.t("plugins.digitization_work_order.cancel_button") %>
+    </button>
+  </div>
+
 <% end %>
 
 <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order_table.js" %>
