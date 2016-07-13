@@ -1,6 +1,13 @@
 Digitization Work Order Plugin
 -----------------------------------
 
+This is an ArchivesSpace plugin that provides the ability to download TSV reports for sets of components under a resource for the purpose of creating digitization work orders.
+
+When a work order is downloaded, component unique identifiers will be generated for components that don't have one. The plugin ships with a default id generator. See the section below on how to provide your own generator.
+
+This plugin was developed against ArchivesSpace v1.5.0-RC3 by Hudson Molonglo for New York University.
+
+
 # Getting Started
 
 Download the latest release from the Releases tab in Github:
@@ -26,17 +33,27 @@ See also:
 
   https://github.com/archivesspace/archivesspace/blob/master/plugins/README.md
 
-You will need to shutdown archivesspace and migrate the database:
-
-     $ cd /path/to/archivesspace
-     $ scripts/setup-database.sh
-
-See also:
-
-  https://github.com/archivesspace/archivesspace/blob/master/UPGRADING.md
 
 # How it works
 
 When this plugin is installed, you will see a new toolbar option at the top
 of the Resource tree. Clicking this button will open a modal and allow you
-to customize a Work Order Report for the selected items in the archival tree.
+to customize a Work Order Report for the selected items in the resource tree.
+
+
+# How to replace the default id generator
+
+To replace the default id generator, you will need to subclass:
+
+    backend/model/id_generators/generator_interface.rb
+
+Place your new class file in the same directory. For an example, see the default generator:
+
+    backend/model/id_generators/default_generator.rb
+
+To activate your new generator, edit `archivesspace/config/config.rb`, adding a line like this:
+
+    AppConfig[:digitization_work_order_id_generator] = 'MyClassName'
+
+Then restart ArchivesSpace. Be sure to test your generator on non-production data first!
+
