@@ -84,8 +84,8 @@ module Trees
     TopContainer.linked_instance_ds
       .join(:archival_object, :id => :instance__archival_object_id)
       .join(:enumeration_value___top_container_type, :id => :top_container__type_id)
-      .join(:enumeration_value___sub_container_type_2, :id => :sub_container__type_2_id)
-      .join(:enumeration_value___sub_container_type_3, :id => :sub_container__type_3_id)
+      .left_join(:enumeration_value___sub_container_type_2, :id => :sub_container__type_2_id)
+      .left_join(:enumeration_value___sub_container_type_3, :id => :sub_container__type_3_id)
       .filter(:archival_object__root_record_id => self.id)
       .select(Sequel.as(:archival_object__id, :archival_object_id),
               Sequel.as(:top_container__barcode, :top_container_barcode),
@@ -109,10 +109,10 @@ module Trees
          row[:top_container_barcode] ? ('[' + row[:top_container_barcode] + ']') : nil].compact.join(': '),
 
         # BoxType_2 Indicator_2
-        [row[:sub_container_type_2], row[:sub_container_indicator_2]].join(': '),
+        [row[:sub_container_type_2], row[:sub_container_indicator_2]].compact.join(': '),
 
         # BoxType_3 Indicator_3
-        [row[:sub_container_type_3], row[:sub_container_indicator_3]].join(': '),
+        [row[:sub_container_type_3], row[:sub_container_indicator_3]].compact.join(': '),
       ].reject(&:empty?).join(', ')
     end
 
