@@ -6,30 +6,30 @@ class DOReport
   attr_reader :items
 
   BASE_COLUMNS = [
-    {:header => "Resource ID",          :proc => Proc.new {|resource, item| resource_id(resource)}},
-    {:header => "Ref ID",               :proc => Proc.new {|resource, item| ref_id(item)}},
-    {:header => "URI",                  :proc => Proc.new {|resource, item| record_uri(item)}},
-    {:header => "Indicator 1",          :proc => Proc.new {|resource, item, dates, box| indicator_1(box)}},
-    {:header => "Indicator 2",          :proc => Proc.new {|resource, item, dates, box| indicator_2(box)}},
-    {:header => "Indicator 3",          :proc => Proc.new {|resource, item, dates, box| indicator_3(box)}},
-    {:header => "Title",                :proc => Proc.new {|resource, item| record_title(item)}},
-    {:header => "Component ID",         :proc => Proc.new {|resource, item| component_id(item)}},
+    {:header => "Resource ID",           :proc => Proc.new {|resource, item| resource_id(resource)}},
+    {:header => "Ref ID",                :proc => Proc.new {|resource, item| ref_id(item)}},
+    {:header => "URI",                   :proc => Proc.new {|resource, item| record_uri(item)}},
+    {:header => "Container Indicator 1", :proc => Proc.new {|resource, item, dates, box| indicator_1(box)}},
+    {:header => "Container Indicator 2", :proc => Proc.new {|resource, item, dates, box| indicator_2(box)}},
+    {:header => "Container Indicator 3", :proc => Proc.new {|resource, item, dates, box| indicator_3(box)}},
+    {:header => "Title",                 :proc => Proc.new {|resource, item| record_title(item)}},
+    {:header => "Component ID",          :proc => Proc.new {|resource, item| component_id(item)}},
   ]
 
   SERIES_COLUMNS = [
-    {:header => "Series",               :proc => Proc.new { |resource, item, dates, box, series| record_title(series) }}
+    {:header => "Series",                :proc => Proc.new { |resource, item, dates, box, series| record_title(series) }}
   ]
 
   SUBSERIES_COLUMNS = [
-    {:header => "Sub-Series",           :proc => Proc.new { |resource, item, dates, box, series, subseries| record_title(subseries) }}
+    {:header => "Sub-Series",            :proc => Proc.new { |resource, item, dates, box, series, subseries| record_title(subseries) }}
   ]
 
   BARCODE_COLUMNS = [
-    {:header => "Barcode",              :proc => Proc.new {|resource, item, dates, box| barcode(box)}}
+    {:header => "Barcode",               :proc => Proc.new {|resource, item, dates, box| barcode(box)}}
   ]
 
   DATES_COLUMNS = [
-    {:header => "Dates",                :proc => Proc.new {|resource, item, dates| date_string(dates)}}
+    {:header => "Dates",                 :proc => Proc.new {|resource, item, dates| date_string(dates)}}
   ]
 
 
@@ -240,31 +240,30 @@ class DOReport
   end
 
 
-  def self.indicator_1(box)
+  def self.box_concat(box, &block)
     return '' unless box
-    if box[:top_container]
-      box[:top_container][:indicator]
-    end
+    out = box.map { |b| block.call(b) }
+    out.compact.join(', ')
+  end
+
+
+  def self.indicator_1(box)
+    box_concat(box) { |b| b[:top_container][:indicator] if b[:top_container] }
   end
 
 
   def self.barcode(box)
-    return '' unless box
-    if box[:top_container]
-      box[:top_container][:barcode]
-    end
+    box_concat(box) { |b| b[:top_container][:barcode] if b[:top_container] }
   end
 
 
   def self.indicator_2(box)
-    return '' unless box
-    box[:sub_container][:indicator_2]
+    box_concat(box) { |b| b[:sub_container][:indicator_2] }
   end
 
 
   def self.indicator_3(box)
-    return '' unless box
-    box[:sub_container][:indicator_3]
+    box_concat(box) { |b| b[:sub_container][:indicator_3] }
   end
 
 

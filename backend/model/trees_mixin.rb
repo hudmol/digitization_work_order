@@ -71,8 +71,8 @@ module Trees
         :type_3 => row[:sub_container_type_3],
         :indicator_3 => row[:sub_container_indicator_3],
       }
-      result[row[:archival_object_id]] = fields
-      
+      result[row[:archival_object_id]] ||= []
+      result[row[:archival_object_id]] << fields
     end
     result
   end
@@ -83,7 +83,7 @@ module Trees
   def containers_ds
     TopContainer.linked_instance_ds
       .join(:archival_object, :id => :instance__archival_object_id)
-      .join(:enumeration_value___top_container_type, :id => :top_container__type_id)
+      .left_join(:enumeration_value___top_container_type, :id => :top_container__type_id)
       .left_join(:enumeration_value___sub_container_type_2, :id => :sub_container__type_2_id)
       .left_join(:enumeration_value___sub_container_type_3, :id => :sub_container__type_3_id)
       .filter(:archival_object__root_record_id => self.id)
