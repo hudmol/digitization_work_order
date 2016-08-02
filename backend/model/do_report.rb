@@ -240,31 +240,30 @@ class DOReport
   end
 
 
-  def self.indicator_1(box)
+  def self.box_concat(box, &block)
     return '' unless box
-    if box[:top_container]
-      box[:top_container][:indicator]
-    end
+    out = box.map { |b| block.call(b) }
+    out.compact.join(', ')
+  end
+
+
+  def self.indicator_1(box)
+    box_concat(box) { |b| b[:top_container][:indicator] if b[:top_container] }
   end
 
 
   def self.barcode(box)
-    return '' unless box
-    if box[:top_container]
-      box[:top_container][:barcode]
-    end
+    box_concat(box) { |b| b[:top_container][:barcode] if b[:top_container] }
   end
 
 
   def self.indicator_2(box)
-    return '' unless box
-    box[:sub_container][:indicator_2]
+    box_concat(box) { |b| b[:sub_container][:indicator_2] }
   end
 
 
   def self.indicator_3(box)
-    return '' unless box
-    box[:sub_container][:indicator_3]
+    box_concat(box) { |b| b[:sub_container][:indicator_3] }
   end
 
 

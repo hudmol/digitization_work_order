@@ -71,8 +71,8 @@ module Trees
         :type_3 => row[:sub_container_type_3],
         :indicator_3 => row[:sub_container_indicator_3],
       }
-      result[row[:archival_object_id]] = fields
-      
+      result[row[:archival_object_id]] ||= []
+      result[row[:archival_object_id]] << fields
     end
     result
   end
