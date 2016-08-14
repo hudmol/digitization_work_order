@@ -16,6 +16,6 @@ en:
       dates: Date(s)
       modal:
         title: Confirm Work Order Download
-        message: Downloading a Work Order will cause component ids to be generated for items in the work order that don't currently have one.
+        message: Creating a work order will auto-create and assign Component Unique IDs (CUIDs) to archival objects in the work order that don't currently have CUIDs
         warning: Records may be updated.
         download_button: Download Work Order
