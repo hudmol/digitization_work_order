@@ -43,12 +43,14 @@
       </form>
     </div>
 
+    <p class="alert alert-info" role="alert">If you would like a report of metadata for these items without generating component unique identifiers (CUIDs) , select <strong>Download Report</strong>. If you would like to create a work order and generate CUIDs for archival objects currently lacking them, select <strong>Download Work Order</strong>.</p>
+
     <div class="form-group">
-      <button id="showWorkOrderModal" class="btn btn-primary submit-btn" disabled>
-        <%= I18n.t("plugins.digitization_work_order.show_work_order_modal_button") %>
-      </button>
       <button id="generateReport" class="btn btn-primary submit-btn" disabled>
         <%= I18n.t("plugins.digitization_work_order.download_report_button") %>
+      </button>
+      <button id="showWorkOrderModal" class="btn btn-primary submit-btn" disabled>
+          <%= I18n.t("plugins.digitization_work_order.show_work_order_modal_button") %>
       </button>
       <%= link_to I18n.t("plugins.digitization_work_order.cancel_button"),:back, :class => "btn btn-default" %>
     </div>
