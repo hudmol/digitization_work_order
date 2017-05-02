@@ -1,14 +1,14 @@
 class LadybirdExport
 
   COLUMNS = [
-    {:header => "{F1}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F2}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F3}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F4}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F5}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F6}",                :proc => Proc.new {|row| ''}},
-    {:header => "{F20}",               :proc => Proc.new {|row| ''}},
-    {:header => "{F21}",               :proc => Proc.new {|row| ''}},
+    {:header => "{F1}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F2}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F3}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F4}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F5}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F6}",                :proc => Proc.new {|row| nil }},
+    {:header => "{F20}",               :proc => Proc.new {|row| nil }},
+    {:header => "{F21}",               :proc => Proc.new {|row| nil }},
     # Local record ID {fdid=56}
     {:header => "{fdid=56}",           :proc => Proc.new {|row| local_record_id(row)}},
     # Call number {fdid=58}
@@ -27,31 +27,37 @@ class LadybirdExport
     {:header => "{fdid=69}",           :proc => Proc.new {|row, export| creator(row, export)}},
     # Title {fdid=70}
     {:header => "{fdid=70}",           :proc => Proc.new {|row, export| title(row, export)}},
-    {:header => "{fdid=79}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=82}",           :proc => Proc.new {|row| ''}},
+    {:header => "{fdid=79}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=82}",           :proc => Proc.new {|row| 'FIXME'}},
     # Language {fdid=84}
     {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
     # Note {fdid=86}
     {:header => "{fdid=86}",           :proc => Proc.new {|row, export| note(row, export)}},
     # Abstract {fdid=87}
     {:header => "{fdid=87}",           :proc => Proc.new {|row, export| abstract(row, export)}},
-    {:header => "{fdid=88}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=90}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=91}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=98}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=99}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=100}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=102}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=103}",           :proc => Proc.new {|row| ''}},
+    {:header => "{fdid=88}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=90}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=91}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Genre {fdid=98}
+    {:header => "{fdid=98}",           :proc => Proc.new {|row| nil }}, #BLANK!
+    # Type of resource {fdid=99}
+    {:header => "{fdid=99}",           :proc => Proc.new {|row| nil }}, #BLANK!
+    # Location, YUL {fdid=100}
+    {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
+    {:header => "{fdid=102}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Restriction {fdid=103}
+    {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Barcode {fdid=105}
     {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
-    {:header => "{fdid=106}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=156}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=180}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=187}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=275}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=280}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=288}",           :proc => Proc.new {|row| ''}},
+    {:header => "{fdid=106}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=156}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Item Permission  {fdid=180}
+    {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
+    # Studio Notes {fdid=187}
+    {:header => "{fdid=187}",           :proc => Proc.new {|row| nil }}, #BLANK!
+    {:header => "{fdid=275}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=280}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=288}",           :proc => Proc.new {|row| 'FIXME'}},
   ]
 
   def initialize(uris)
