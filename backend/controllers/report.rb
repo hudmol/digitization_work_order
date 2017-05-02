@@ -30,7 +30,8 @@ class ArchivesSpaceService < Sinatra::Base
   Endpoint.get_or_post('/plugins/digitization_work_order/repositories/:repo_id/ladybird')
     .description("Return Excel formatted export for record uris")
     .params(["repo_id", :repo_id],
-            ["uri", [String], "The uris of the records to include in the report"])
+            ["uri", [String], "The uris of the records to include in the report"],
+            ["resource_uri", String, "The resource URI"])
     .permissions([])
     .returns([200, "report"]) \
   do
@@ -38,7 +39,7 @@ class ArchivesSpaceService < Sinatra::Base
       200,
       {
         "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename}\""
+        "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename(JSONModel.parse_reference(params[:resource_uri]).fetch(:id))}\""
       },
       LadybirdExport.new(params[:uri]).to_stream
     ]
@@ -46,8 +47,8 @@ class ArchivesSpaceService < Sinatra::Base
 
   private
 
-  def ladybird_export_filename
-    'digitization_work_order_report.xlsx'
+  def ladybird_export_filename(resource_id)
+    "digitization_work_order_report.#{Resource.id_to_identifier(resource_id).gsub(' ', '_')}.xlsx"
   end
 
 end

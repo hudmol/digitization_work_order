@@ -12,7 +12,7 @@ class WorkOrderController < ApplicationController
 
   def generate_ladybird_export
     uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/ladybird"
-    args = {'uri[]' => JSON.parse(params[:selected])}
+    args = {'uri[]' => JSON.parse(params[:selected]), 'resource_uri' => params[:resource]}
 
     generate_response(uri, args)
   end
