@@ -15,5 +15,7 @@ WorkOrderToolbarAction.prototype.setupButton = function() {
 
 // setup the work order toolbar action
 $(document).on("loadedrecordform.aspace", function(event, $container) {
-  new WorkOrderToolbarAction();
+  if (tree && tree.current().data('jsonmodel_type') == 'resource') {
+    new WorkOrderToolbarAction();
+  }
 });
