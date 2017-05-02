@@ -32,7 +32,7 @@ class LadybirdExport
     # Date, created {fdid=79}
     {:header => "{fdid=79}",           :proc => Proc.new {|row, export| creation_date(row, export)}},
     # Physical description {fdid=82}
-    {:header => "{fdid=82}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=82}",           :proc => Proc.new {|row, export| physical_description(row, export)}},
     # Language {fdid=84}
     {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
     # Note {fdid=86}
@@ -75,7 +75,7 @@ class LadybirdExport
 
   def initialize(uris)
     @uris = uris
-    @ids = archival_object_ids
+    @ids = extract_ids
   end
 
   def to_stream
@@ -93,59 +93,23 @@ class LadybirdExport
   end
 
   def creators_for_archival_object(id)
-    creators = []
-
-    @agents.each do |row|
-      if row[:archival_object_id] == id
-        creators << (row[:person] || row[:corporate_entity] || row[:family] || row[:software])
-      end
-    end
-
-    creators
+    @creators.fetch(id, [])
   end
 
   def creation_dates_for_archival_object(id)
-    dates = []
+    @creation_dates.fetch(id, [])
+  end
 
-    @creation_dates.each do |row|
-      if row[:archival_object_id] == id
-        dates << (row[:expression] || [row[:begin], row[:end]].compact.join(' - '))
-      end
-    end
-
-    dates
+  def extents_for_archival_object(id)
+    @extents.fetch(id, [])
   end
 
   def creators_for_resource(id)
-    creators = []
-
-    @resource_agents.each do |row|
-      if row[:resource_id] == id
-        creators << (row[:person] || row[:corporate_entity] || row[:family] || row[:software])
-      end
-    end
-
-    creators
+    @resource_creators.fetch(id, [])
   end
 
   def notes_for_archival_object(id)
-    notes = {}
-
-    @notes.each do |row|
-      if row[:archival_object_id] == id
-        note = ASUtils.json_parse(row[:note])
-
-        type = note.fetch('type')
-        subnotes = note.fetch('subnotes')
-
-        content = subnotes.collect{|n| n.fetch('content')}
-
-        notes[type] ||= []
-        notes[type] << content
-      end
-    end
-
-    notes
+    @notes.fetch(id, {})
   end
 
   private
@@ -178,94 +142,152 @@ class LadybirdExport
     # sub_container bits
     ds = ds.select_append(Sequel.as(:sub_container__indicator_2, :sub_container_folder))
 
-    # linked agents
-    creator_enum_id = EnumerationValue
-                          .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
-                          .filter(:value => 'creator')
-                          .select(:id)
-
-    @agents = ArchivalObject
-              .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__archival_object_id => :archival_object__id)
-              .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
-              .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
-              .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
-              .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
-              .left_outer_join(:name_person, :name_person__id => :agent_person__id)
-              .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
-              .left_outer_join(:name_family, :name_family__id => :agent_family__id)
-              .left_outer_join(:name_software, :name_software__id => :agent_software__id)
-              .filter(:archival_object__id => @ids)
-              .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-              .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-              .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-              .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-              .and(:linked_agents_rlshp__role_id => creator_enum_id)
-              .select(Sequel.as(:archival_object__id, :archival_object_id),
-                      Sequel.as(:name_person__sort_name, :person),
-                      Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
-                      Sequel.as(:name_family__sort_name, :family),
-                      Sequel.as(:name_software__sort_name, :software))
-              .distinct
-              .all
-
-    # Created dates
-    creation_enum_id = EnumerationValue
-                        .filter(:enumeration_id => Enumeration.filter(:name => 'date_label').select(:id))
-                        .filter(:value => 'creation')
-                        .select(:id)
-    @creation_dates = ASDate
-                        .filter(:date__archival_object_id => @ids)
-                        .filter(:date__label_id => creation_enum_id)
-                        .select(:archival_object_id, :expression, :begin, :end)
-
-    @resource_agents = Resource
-                         .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__resource_id => :resource__id)
-                         .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
-                         .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
-                         .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
-                         .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
-                         .left_outer_join(:name_person, :name_person__id => :agent_person__id)
-                         .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
-                         .left_outer_join(:name_family, :name_family__id => :agent_family__id)
-                         .left_outer_join(:name_software, :name_software__id => :agent_software__id)
-                         .left_outer_join(:archival_object, :archival_object__root_record_id => :resource__id)
-                         .filter(:archival_object__id => @ids)
-                         .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-                         .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-                         .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-                         .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-                         .and(:linked_agents_rlshp__role_id => creator_enum_id)
-                         .select(Sequel.as(:resource__id, :resource_id),
-                                 Sequel.as(:name_person__sort_name, :person),
-                                 Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
-                                 Sequel.as(:name_family__sort_name, :family),
-                                 Sequel.as(:name_software__sort_name, :software))
-                         .distinct
-                         .all
-
-    # linked notes
-    @notes = Note
-              .filter(:note__archival_object_id => @ids)
-              .select(Sequel.as(:note__archival_object_id, :archival_object_id),
-                      Sequel.as(:note__notes, :note))
-              .all
+    prepare_creation_dates
+    prepare_creators
+    prepare_extents
+    prepare_notes
 
     ds
   end
 
-  def archival_object_ids
-    ids = []
-
-    @uris.each do |uri|
+  def extract_ids
+    @uris.map { |uri|
       parsed = JSONModel.parse_reference(uri)
 
       # only archival_objects
       next unless parsed[:type] == "archival_object"
 
-      ids << parsed[:id]
+      parsed[:id]
+    }.compact
+  end
+
+  def prepare_creation_dates
+    @creation_dates = {}
+
+    creation_enum_id = EnumerationValue
+                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_label').select(:id))
+                         .filter(:value => 'creation')
+                         .select(:id)
+
+    ASDate
+      .filter(:date__archival_object_id => @ids)
+      .filter(:date__label_id => creation_enum_id)
+      .select(:archival_object_id, :expression, :begin, :end)
+      .each do |row|
+
+      @creation_dates[row[:archival_object_id]] ||= []
+      @creation_dates[row[:archival_object_id]] << row
+    end
+  end
+
+  def prepare_extents
+    @extents = {}
+
+    Extent
+     .left_outer_join(:enumeration_value, { :portion_enum__id => :extent__portion_id }, :table_alias => :portion_enum)
+     .left_outer_join(:enumeration_value, { :extent_type_enum__id => :extent__extent_type_id }, :table_alias => :extent_type_enum)
+     .filter(:extent__archival_object_id => @ids)
+     .select(Sequel.as(:extent__archival_object_id, :archival_object_id),
+             Sequel.as(:portion_enum__value, :portion),
+             Sequel.as(:extent_type_enum__value, :extent_type),
+             Sequel.as(:extent__number, :number))
+     .each do |row|
+
+      @extents[row[:archival_object_id]] ||= []
+      @extents[row[:archival_object_id]] << row
+    end
+  end
+
+  def prepare_creators
+    @creators = {}
+    @resource_creators = {}
+
+    creator_enum_id = EnumerationValue
+                        .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
+                        .filter(:value => 'creator')
+                        .select(:id)
+
+    ArchivalObject
+      .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__archival_object_id => :archival_object__id)
+      .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
+      .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
+      .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
+      .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
+      .left_outer_join(:name_person, :name_person__id => :agent_person__id)
+      .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
+      .left_outer_join(:name_family, :name_family__id => :agent_family__id)
+      .left_outer_join(:name_software, :name_software__id => :agent_software__id)
+      .filter(:archival_object__id => @ids)
+      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
+      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
+      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
+      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
+      .and(:linked_agents_rlshp__role_id => creator_enum_id)
+      .select(Sequel.as(:archival_object__id, :archival_object_id),
+              Sequel.as(:name_person__sort_name, :person),
+              Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
+              Sequel.as(:name_family__sort_name, :family),
+              Sequel.as(:name_software__sort_name, :software))
+      .distinct
+      .each do |row|
+
+      @creators[row[:archival_object_id]] ||= []
+      @creators[row[:archival_object_id]] << row
     end
 
-    ids
+    Resource
+      .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__resource_id => :resource__id)
+      .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
+      .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
+      .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
+      .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
+      .left_outer_join(:name_person, :name_person__id => :agent_person__id)
+      .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
+      .left_outer_join(:name_family, :name_family__id => :agent_family__id)
+      .left_outer_join(:name_software, :name_software__id => :agent_software__id)
+      .left_outer_join(:archival_object, :archival_object__root_record_id => :resource__id)
+      .filter(:archival_object__id => @ids)
+      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
+      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
+      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
+      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
+      .and(:linked_agents_rlshp__role_id => creator_enum_id)
+      .select(Sequel.as(:resource__id, :resource_id),
+              Sequel.as(:name_person__sort_name, :person),
+              Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
+              Sequel.as(:name_family__sort_name, :family),
+              Sequel.as(:name_software__sort_name, :software))
+      .distinct
+      .each do |row|
+
+      @resource_creators[row[:archival_object_id]] ||= []
+      @resource_creators[row[:archival_object_id]] << row
+    end
+  end
+
+  def prepare_notes
+    @notes = {}
+
+    Note
+      .filter(:note__archival_object_id => @ids)
+      .select(Sequel.as(:note__archival_object_id, :archival_object_id),
+              Sequel.as(:note__notes, :note))
+      .each do |row|
+
+      @notes[row[:archival_object_id]] ||= {}
+
+      note = ASUtils.json_parse(row[:note])
+
+      type = note.fetch('type')
+      subnotes = note.fetch('subnotes', nil)
+
+      next unless subnotes
+
+      content = subnotes.collect{|n| n.fetch('content', nil)}.compact
+
+      @notes[row[:archival_object_id]][type] ||= []
+      @notes[row[:archival_object_id]][type] << content
+    end
   end
 
   def self.local_record_id(row)
@@ -289,8 +311,10 @@ class LadybirdExport
   end
 
   def self.host_creator(row, export)
-    creators = export.creators_for_resource(row[:resource_id])
-    creators.join('; ')
+    export
+      .creators_for_resource(row[:archival_object_id])
+      .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
+      .join(' | ')
   end
 
   def self.host_title(row)
@@ -299,35 +323,33 @@ class LadybirdExport
 
   def self.host_note(row, export)
     # FIXME this is a breadcrumb
+    'FIXME'
   end
 
   def self.note(row, export)
-    notes = export.notes_for_archival_object(row[:archival_object_id])
-
-    notes_to_show = []
-
-    notes.map{|type, content|
-      next if type == 'scopecontent'
-      next if type == 'accessrestrict'
-
-      notes_to_show << content.flatten
-    }
-
-    notes_to_show.flatten.join(' | ')
+    export
+      .notes_for_archival_object(row[:archival_object_id])
+      .map{|type, content|
+        next if type == 'scopecontent'
+        next if type == 'accessrestrict'
+  
+        content.flatten
+      }
+      .flatten
+      .compact
+      .join(' | ')
   end
 
   def self.abstract(row, export)
-    notes = export.notes_for_archival_object(row[:archival_object_id])
-
-    notes_to_show = []
-
-    notes.map{|type, content|
-      next unless type == 'scopecontent'
-
-      notes_to_show << content.flatten
-    }
-
-    notes_to_show.flatten.join(' | ')
+    export
+      .notes_for_archival_object(row[:archival_object_id])
+      .map{|type, content|
+        next unless type == 'scopecontent'
+        content.flatten
+      }
+      .compact
+      .flatten
+      .join(' | ')
   end
 
   def self.title(row, export)
@@ -336,8 +358,10 @@ class LadybirdExport
   end
 
   def self.creator(row, export)
-    creators = export.creators_for_archival_object(row[:archival_object_id])
-    creators.join('; ')
+    export
+      .creators_for_archival_object(row[:archival_object_id])
+      .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
+      .join(' | ')
   end
 
   def self.language(row)
@@ -345,8 +369,17 @@ class LadybirdExport
   end
 
   def self.creation_date(row, export)
-    dates = export.creation_dates_for_archival_object(row[:archival_object_id])
-    dates.join('; ')
+    export
+      .creation_dates_for_archival_object(row[:archival_object_id])
+      .map{|row| row[:expression] || [row[:begin], row[:end]].compact.join(' - ')}
+      .join(' | ')
+  end
+
+  def self.physical_description(row, export)
+    export
+      .extents_for_archival_object(row[:archival_object_id])
+      .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
+      .join(' | ')
   end
 
 end
