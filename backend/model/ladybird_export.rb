@@ -1,3 +1,5 @@
+require 'axlsx'
+
 class LadybirdExport
 
   COLUMNS = [
@@ -76,17 +78,17 @@ class LadybirdExport
   end
 
   def to_stream
-    rows = []
+    p = Axlsx::Package.new
+    wb = p.workbook
 
-    dataset.each do |row|
-      result = {}
-      COLUMNS.map {|col|
-        result[col.fetch(:header)] = col[:proc].call(row, self)
-      }
-      rows << result
+    wb.add_worksheet(:name => 'Digitization Work Order') do |sheet|
+      sheet.add_row COLUMNS.collect{|col| col.fetch(:header)}
+      dataset.each do |row|
+        sheet.add_row COLUMNS.map {|col| col[:proc].call(row, self) }
+      end
     end
 
-    rows.to_json
+    p.to_stream
   end
 
   def creators_for_archival_object(id)

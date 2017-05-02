@@ -34,17 +34,12 @@ class ArchivesSpaceService < Sinatra::Base
     .permissions([])
     .returns([200, "report"]) \
   do
-    # [
-    #   200,
-    #   {
-    #     "Content-Type" => "text/tab-separated-values",
-    #     "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename}\""
-    #   },
-    #   LadybirdExport.new(params[:uri]).to_stream
-    # ]
     [
-      200, 
-      {"Content-Type" => "text/plain"},
+      200,
+      {
+        "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename}\""
+      },
       LadybirdExport.new(params[:uri]).to_stream
     ]
   end
