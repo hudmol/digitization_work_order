@@ -29,7 +29,8 @@ class LadybirdExport
     {:header => "{fdid=70}",           :proc => Proc.new {|row, export| title(row, export)}},
     {:header => "{fdid=79}",           :proc => Proc.new {|row| ''}},
     {:header => "{fdid=82}",           :proc => Proc.new {|row| ''}},
-    {:header => "{fdid=84}",           :proc => Proc.new {|row| ''}},
+    # Language {fdid=84}
+    {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
     # Note {fdid=86}
     {:header => "{fdid=86}",           :proc => Proc.new {|row, export| note(row, export)}},
     # Abstract {fdid=87}
@@ -125,12 +126,14 @@ class LadybirdExport
            .left_outer_join(:resource, :resource__id => :archival_object__root_record_id)
            .left_outer_join(:top_container_link_rlshp, :top_container_link_rlshp__sub_container_id => :sub_container__id)
            .left_outer_join(:top_container, :top_container__id => :top_container_link_rlshp__top_container_id)
+           .left_outer_join(:enumeration_value, { :language_enum__id => :archival_object__language_id }, :table_alias => :language_enum)
            .filter(:instance__archival_object_id => @ids)
 
     # archival object bits
     ds = ds.select_append(Sequel.as(:archival_object__id, :archival_object_id))
     ds = ds.select_append(Sequel.as(:archival_object__repo_id, :repo_id))
     ds = ds.select_append(Sequel.as(:archival_object__title, :archival_object_title))
+    ds = ds.select_append(Sequel.as(:language_enum__value, :archival_object_language))
 
     # resource bits
     ds = ds.select_append(Sequel.as(:resource__id, :resource_id))
@@ -293,6 +296,10 @@ class LadybirdExport
   def self.creator(row, export)
     creators = export.creators_for_archival_object(row[:archival_object_id])
     creators.join('; ')
+  end
+
+  def self.language(row)
+    row[:archival_object_language]
   end
 
 end
