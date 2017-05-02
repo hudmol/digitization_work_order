@@ -27,7 +27,9 @@ class LadybirdExport
     {:header => "{fdid=69}",           :proc => Proc.new {|row, export| creator(row, export)}},
     # Title {fdid=70}
     {:header => "{fdid=70}",           :proc => Proc.new {|row, export| title(row, export)}},
+    # Date, created {fdid=79}
     {:header => "{fdid=79}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Physical description {fdid=82}
     {:header => "{fdid=82}",           :proc => Proc.new {|row| 'FIXME'}},
     # Language {fdid=84}
     {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
@@ -35,8 +37,11 @@ class LadybirdExport
     {:header => "{fdid=86}",           :proc => Proc.new {|row, export| note(row, export)}},
     # Abstract {fdid=87}
     {:header => "{fdid=87}",           :proc => Proc.new {|row, export| abstract(row, export)}},
+    # Subject, name {fdid=88}
     {:header => "{fdid=88}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Subject, topic {fdid=90}
     {:header => "{fdid=90}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Subject, geographic {fdid=91}
     {:header => "{fdid=91}",           :proc => Proc.new {|row| 'FIXME'}},
     # Genre {fdid=98}
     {:header => "{fdid=98}",           :proc => Proc.new {|row| nil }}, #BLANK!
@@ -49,14 +54,19 @@ class LadybirdExport
     {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Barcode {fdid=105}
     {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
+    # YFAD {fdid=106}
     {:header => "{fdid=106}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Citation {fdid=156}
     {:header => "{fdid=156}",           :proc => Proc.new {|row| 'FIXME'}},
     # Item Permission  {fdid=180}
     {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Studio Notes {fdid=187}
     {:header => "{fdid=187}",           :proc => Proc.new {|row| nil }}, #BLANK!
+    # Digital Collection {fdid=275}
     {:header => "{fdid=275}",           :proc => Proc.new {|row| 'FIXME'}},
+    # ISO Date {fdid=280)
     {:header => "{fdid=280}",           :proc => Proc.new {|row| 'FIXME'}},
+    # Content type {fdid=288}
     {:header => "{fdid=288}",           :proc => Proc.new {|row| 'FIXME'}},
   ]
 
