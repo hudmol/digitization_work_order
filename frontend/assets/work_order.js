@@ -4,12 +4,10 @@ var WorkOrderToolbarAction = function() {
 
 
 WorkOrderToolbarAction.prototype.setupButton = function() {
-  this.$button = $(AS.renderTemplate("workOrderButtonTemplate"));
+   $workOrder = $(AS.renderTemplate("workOrderButtonTemplate"));
 
-  var $btnGroup = $("<div>").addClass("btn-group");
-  $btnGroup.append(this.$button);
-
-  $(".record-toolbar .btn-toolbar.pull-right > .btn-group:first > .btn-group:first").before($btnGroup);
+  $('#other-dropdown .dropdown-menu').append($('<li />').append($workOrder));
+  $('#other-dropdown').show();
 };
 
 
