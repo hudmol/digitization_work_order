@@ -30,7 +30,7 @@ class LadybirdExport
     # Title {fdid=70}
     {:header => "{fdid=70}",           :proc => Proc.new {|row, export| title(row, export)}},
     # Date, created {fdid=79}
-    {:header => "{fdid=79}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=79}",           :proc => Proc.new {|row, export| creation_date(row, export)}},
     # Physical description {fdid=82}
     {:header => "{fdid=82}",           :proc => Proc.new {|row| 'FIXME'}},
     # Language {fdid=84}
@@ -51,6 +51,7 @@ class LadybirdExport
     {:header => "{fdid=99}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Location, YUL {fdid=100}
     {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
+    # Access condition {fdid=102}
     {:header => "{fdid=102}",           :proc => Proc.new {|row| 'FIXME'}},
     # Restriction {fdid=103}
     {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
@@ -101,6 +102,18 @@ class LadybirdExport
     end
 
     creators
+  end
+
+  def creation_dates_for_archival_object(id)
+    dates = []
+
+    @creation_dates.each do |row|
+      if row[:archival_object_id] == id
+        dates << (row[:expression] || [row[:begin], row[:end]].compact.join(' - '))
+      end
+    end
+
+    dates
   end
 
   def creators_for_resource(id)
@@ -168,6 +181,7 @@ class LadybirdExport
     # linked agents
     creator_enum_id = EnumerationValue
                           .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
+                          .filter(:value => 'creator')
                           .select(:id)
 
     @agents = ArchivalObject
@@ -193,6 +207,16 @@ class LadybirdExport
                       Sequel.as(:name_software__sort_name, :software))
               .distinct
               .all
+
+    # Created dates
+    creation_enum_id = EnumerationValue
+                        .filter(:enumeration_id => Enumeration.filter(:name => 'date_label').select(:id))
+                        .filter(:value => 'creation')
+                        .select(:id)
+    @creation_dates = ASDate
+                        .filter(:date__archival_object_id => @ids)
+                        .filter(:date__label_id => creation_enum_id)
+                        .select(:archival_object_id, :expression, :begin, :end)
 
     @resource_agents = Resource
                          .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__resource_id => :resource__id)
@@ -318,6 +342,11 @@ class LadybirdExport
 
   def self.language(row)
     row[:archival_object_language]
+  end
+
+  def self.creation_date(row, export)
+    dates = export.creation_dates_for_archival_object(row[:archival_object_id])
+    dates.join('; ')
   end
 
 end
