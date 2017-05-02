@@ -1,0 +1,14 @@
+
+    <div class="form-group">
+      <button id="generateLadybirdExport" class="btn btn-primary submit-btn" disabled>
+        <%= I18n.t("plugins.digitization_work_order.download_ladybird_export_button") %>
+      </button>
+      <%= link_to I18n.t("plugins.digitization_work_order.cancel_button"),:back, :class => "btn btn-default" %>
+    </div>
+
+<%= form_tag({:controller => :work_order, :action => :generate_ladybird_export}, {:method => 'post', :id => "work_order_form"}) do |form| %>
+  <%= hidden_field_tag "resource", @uri %>
+  <div class="report-fields"></div>
+
+<% end %>
+

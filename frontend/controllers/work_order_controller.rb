@@ -2,20 +2,38 @@ require 'cgi'
 
 class WorkOrderController < ApplicationController
 
-  set_access_control "view_repository" => [:index, :generate_report]
+  set_access_control "view_repository" => [:index, :generate_report, :generate_ladybird_export]
 
   def index
     @uri = params[:resource]
     @tree = escape_xml_characters(load_tree)
   end
 
+
+  def generate_ladybird_export
+    uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/ladybird"
+    args = {'uri[]' => JSON.parse(params[:selected])}
+
+    generate_response(uri, args)
+  end
+
+
   def generate_report
-    uris = JSON.parse(params[:selected])
+    uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/report"
+    args = {
+      'uri[]' => JSON.parse(params[:selected]),
+      'extras[]' => JSON.parse(params[:extras]),
+      'generate_ids' => params[:report_type] == 'downloadWorkOrder'
+    }
 
-    extras = JSON.parse(params[:extras])
+    generate_response(uri, args)
+  end
 
-    generate_ids = params[:report_type] == 'downloadWorkOrder'
 
+  private
+
+
+  def generate_response(uri, args)
     queue = Queue.new
 
     backend_session = JSONModel::HTTP::current_backend_session
@@ -23,10 +41,7 @@ class WorkOrderController < ApplicationController
     Thread.new do
       JSONModel::HTTP::current_backend_session = backend_session
       begin
-        post_with_stream_response("/plugins/digitization_work_order/repositories/#{session[:repo_id]}/report",
-                                  "uri[]" => uris,
-                                  "extras[]" => extras,
-                                  "generate_ids" => generate_ids) do |report_response|
+        post_with_stream_response(uri, args) do |report_response|
           response.headers['Content-Disposition'] = report_response['Content-Disposition']
           response.headers['Content-Type'] = report_response['Content-Type']
           response.headers['Last-Modified'] = Time.now.to_s
@@ -71,10 +86,8 @@ class WorkOrderController < ApplicationController
     end
 
     self.response_body.queue = queue
+
   end
-
-
-  private
 
 
   def escape_xml_characters(tree)

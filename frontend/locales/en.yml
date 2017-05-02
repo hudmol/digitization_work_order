@@ -6,6 +6,7 @@ en:
       loading: Loading...
       show_work_order_modal_button: Download Work Order ...
       download_report_button: Download Report
+      download_ladybird_export_button: Download Ladybird Export
       cancel_button: Cancel
       resource: Resource
       records_selected: Records selected
