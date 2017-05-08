@@ -40,11 +40,11 @@ class LadybirdExport
     # Abstract {fdid=87}
     {:header => "{fdid=87}",           :proc => Proc.new {|row, export| abstract(row, export)}},
     # Subject, name {fdid=88}
-    {:header => "{fdid=88}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=88}",           :proc => Proc.new {|row, export| name_subjects(row, export)}},
     # Subject, topic {fdid=90}
-    {:header => "{fdid=90}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=90}",           :proc => Proc.new {|row, export| topic_subjects(row, export)}},
     # Subject, geographic {fdid=91}
-    {:header => "{fdid=91}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=91}",           :proc => Proc.new {|row, export| geo_subjects(row, export)}},
     # Genre {fdid=98}
     {:header => "{fdid=98}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Type of resource {fdid=99}
@@ -132,6 +132,34 @@ class LadybirdExport
     }.join('. ')
   end
 
+  def name_subjects_for_archival_object(id)
+    @subjects.fetch(id, [])
+      .select{|subject|
+        ASUtils.wrap(subject[:term_types]).any?{|term_type|
+          term_type == 'uniform_title'
+        }
+      }
+  end
+
+  def topic_subjects_for_archival_object(id)
+    @subjects.fetch(id, [])
+      .select{|subject|
+        ASUtils.wrap(subject[:term_types]).any?{|term_type|
+          term_type == 'topical'
+        }
+      }
+  end
+
+  def geo_subjects_for_archival_object(id)
+    @subjects.fetch(id, [])
+      .select{|subject|
+        ASUtils.wrap(subject[:term_types]).any?{|term_type|
+          term_type == 'geographic'
+        }
+      }
+  end
+
+
   private
 
   def dataset
@@ -142,12 +170,14 @@ class LadybirdExport
            .left_outer_join(:top_container_link_rlshp, :top_container_link_rlshp__sub_container_id => :sub_container__id)
            .left_outer_join(:top_container, :top_container__id => :top_container_link_rlshp__top_container_id)
            .left_outer_join(:enumeration_value, { :language_enum__id => :archival_object__language_id }, :table_alias => :language_enum)
+           .left_outer_join(:enumeration_value, { :level_enum__id => :archival_object__level_id }, :table_alias => :level_enum)
            .filter(:instance__archival_object_id => @ids)
 
     # archival object bits
     ds = ds.select_append(Sequel.as(:archival_object__id, :archival_object_id))
     ds = ds.select_append(Sequel.as(:archival_object__repo_id, :repo_id))
     ds = ds.select_append(Sequel.as(:archival_object__title, :archival_object_title))
+    ds = ds.select_append(Sequel.as(:level_enum__value, :archival_object_level))
     ds = ds.select_append(Sequel.as(:language_enum__value, :archival_object_language))
 
     # resource bits
@@ -167,6 +197,7 @@ class LadybirdExport
     prepare_extents
     prepare_notes
     prepare_breadcrumbs
+    prepare_subjects
 
     ds
   end
@@ -376,6 +407,39 @@ class LadybirdExport
     end
   end
 
+
+  def prepare_subjects
+    @subjects = {}
+
+    current = nil
+
+    Subject
+      .left_outer_join(:subject_rlshp, :subject_rlshp__subject_id => :subject__id)
+      .left_outer_join(:subject_term, :subject_term__subject_id => :subject__id)
+      .left_outer_join(:term, :term__id => :subject_term__term_id)
+      .left_outer_join(:enumeration_value, { :term_type_enum__id => :term__term_type_id }, :table_alias => :term_type_enum)
+      .filter(:subject_rlshp__archival_object_id => @ids)
+      .select(Sequel.as(:subject_rlshp__archival_object_id, :archival_object_id),
+              Sequel.as(:subject__id, :subject_id),
+              Sequel.as(:term_type_enum__value, :term_type),
+              Sequel.as(:subject__title, :display_string))
+      .each do |row|
+      @subjects[row[:archival_object_id]] ||= []
+      if current.nil? || current[:subject_id] != row[:subject_id]
+        current = {
+          :subject_id => row[:subject_id],
+          :display_string => row[:display_string],
+          :term_types => [row[:term_type]]
+        }
+
+        @subjects[row[:archival_object_id]] << current
+      else
+        current[:term_types] << row[:term_type]
+      end
+    end
+  end
+
+
   def self.local_record_id(row)
     "/repositories/#{row[:repo_id]}/archival_objects/#{row[:archival_object_id]}"
   end
@@ -438,7 +502,7 @@ class LadybirdExport
   end
 
   def self.title(row, export)
-    # FIXME need to append dates or show date if no title 
+    # FIXME need to append dates or show date if no title?
     row[:archival_object_title]
   end
 
@@ -464,6 +528,33 @@ class LadybirdExport
     export
       .extents_for_archival_object(row[:archival_object_id])
       .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
+      .join(' | ')
+  end
+
+  def self.name_subjects(row, export)
+    return if row[:archival_object_level] != 'item'
+
+    export
+      .name_subjects_for_archival_object(row[:archival_object_id])
+      .map{|row| row[:display_string]}
+      .join(' | ')
+  end
+
+  def self.topic_subjects(row, export)
+    return if row[:archival_object_level] != 'item'
+
+    export
+      .topic_subjects_for_archival_object(row[:archival_object_id])
+      .map{|row| row[:display_string]}
+      .join(' | ')
+  end
+
+  def self.geo_subjects(row, export)
+    return if row[:archival_object_level] != 'item'
+
+    export
+      .geo_subjects_for_archival_object(row[:archival_object_id])
+      .map{|row| row[:display_string]}
       .join(' | ')
   end
 
