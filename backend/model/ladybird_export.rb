@@ -84,13 +84,25 @@ class LadybirdExport
     wb = p.workbook
 
     wb.add_worksheet(:name => 'Digitization Work Order') do |sheet|
+      highlight = sheet.styles.add_style :bg_color => "E8F4FF"
+
       sheet.add_row COLUMNS.collect{|col| col.fetch(:header)}
       dataset.each do |row|
-        sheet.add_row COLUMNS.map {|col| col[:proc].call(row, self) }
+        row_style = nil
+
+        if has_digital_object_instances?(row[:archival_object_id])
+          row_style = highlight
+        end
+
+        sheet.add_row COLUMNS.map {|col| col[:proc].call(row, self) }, :style => row_style
       end
     end
 
     p.to_stream
+  end
+
+  def has_digital_object_instances?(id)
+    @has_digital_object_instances.include?(id)
   end
 
   def creators_for_archival_object(id)
@@ -198,6 +210,7 @@ class LadybirdExport
     prepare_notes
     prepare_breadcrumbs
     prepare_subjects
+    prepare_digital_object_instance_flags
 
     ds
   end
@@ -439,6 +452,19 @@ class LadybirdExport
     end
   end
 
+  def prepare_digital_object_instance_flags
+    @has_digital_object_instances = []
+
+    Instance
+      .left_outer_join(:instance_do_link_rlshp, :instance_do_link_rlshp__instance_id => :instance__id)
+      .filter(:instance__archival_object_id => @ids)
+      .filter(Sequel.~(:instance_do_link_rlshp__digital_object_id => nil))
+      .select(Sequel.as(:instance__archival_object_id, :archival_object_id))
+      .distinct
+      .each do |row|
+      @has_digital_object_instances << row[:archival_object_id]
+    end
+  end
 
   def self.local_record_id(row)
     "/repositories/#{row[:repo_id]}/archival_objects/#{row[:archival_object_id]}"
