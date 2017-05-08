@@ -73,8 +73,9 @@ class LadybirdExport
     {:header => "{fdid=288}",           :proc => Proc.new {|row| 'FIXME'}},
   ]
 
-  def initialize(uris)
+  def initialize(uris, resource_uri)
     @uris = uris
+    @resource_uri = resource_uri
     @ids = extract_ids
   end
 
@@ -112,6 +113,12 @@ class LadybirdExport
     @notes.fetch(id, {})
   end
 
+  def breadcrumb_for_archival_object(id)
+    crumbs = @breadcrumbs.fetch(id)
+    crumbs.shift # drop the resource
+    crumbs.collect{|ao| ao.fetch('title')}.join('. ')
+  end
+
   private
 
   def dataset
@@ -146,6 +153,7 @@ class LadybirdExport
     prepare_creators
     prepare_extents
     prepare_notes
+    prepare_breadcrumbs
 
     ds
   end
@@ -290,6 +298,16 @@ class LadybirdExport
     end
   end
 
+  def prepare_breadcrumbs
+    parsed_resource_uri = JSONModel.parse_reference(@resource_uri)
+    parsed_repo_uri = JSONModel.parse_reference(parsed_resource_uri.fetch(:repository))
+
+    resource = Resource.get_or_die(parsed_resource_uri.fetch(:id))
+    large_tree = LargeTree.new(resource)
+
+    @breadcrumbs = large_tree.node_from_root(@ids, parsed_repo_uri.fetch(:id))
+  end
+
   def self.local_record_id(row)
     "/repositories/#{row[:repo_id]}/archival_objects/#{row[:archival_object_id]}"
   end
@@ -322,8 +340,7 @@ class LadybirdExport
   end
 
   def self.host_note(row, export)
-    # FIXME this is a breadcrumb
-    'FIXME'
+    export.breadcrumb_for_archival_object(row[:archival_object_id])
   end
 
   def self.note(row, export)

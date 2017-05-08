@@ -41,7 +41,7 @@ class ArchivesSpaceService < Sinatra::Base
         "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename(JSONModel.parse_reference(params[:resource_uri]).fetch(:id))}\""
       },
-      LadybirdExport.new(params[:uri]).to_stream
+      LadybirdExport.new(params[:uri], params[:resource_uri]).to_stream
     ]
   end
 
