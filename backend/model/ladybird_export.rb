@@ -115,8 +115,21 @@ class LadybirdExport
 
   def breadcrumb_for_archival_object(id)
     crumbs = @breadcrumbs.fetch(id)
-    crumbs.shift # drop the resource
-    crumbs.collect{|ao| ao.fetch('title')}.join('. ')
+    crumbs.collect{|ao|
+      display_string = ao.fetch('display_string')
+
+      # RULE:
+      # Only include "Series X" if the component unique identifier has been
+      # filled out in ASpace (otherwise, just include the title)
+      if ao.fetch('level') == 'series' && !ao.fetch('component_id', nil).nil?
+        # only prepend title with "Series" (if not already there)
+        unless display_string.start_with?('Series')
+          display_string = "Series #{display_string}"
+        end
+      end
+
+      display_string
+    }.join('. ')
   end
 
   private
@@ -301,11 +314,66 @@ class LadybirdExport
   def prepare_breadcrumbs
     parsed_resource_uri = JSONModel.parse_reference(@resource_uri)
     parsed_repo_uri = JSONModel.parse_reference(parsed_resource_uri.fetch(:repository))
+    repo_id = parsed_repo_uri.fetch(:id)
 
-    resource = Resource.get_or_die(parsed_resource_uri.fetch(:id))
-    large_tree = LargeTree.new(resource)
+    child_to_parent_map = {}
+    node_to_position_map = {}
+    node_to_root_record_map = {}
+    node_to_data_map = {}
 
-    @breadcrumbs = large_tree.node_from_root(@ids, parsed_repo_uri.fetch(:id))
+    @breadcrumbs = {}
+
+    DB.open do |db|
+      ## Fetch our mappings of nodes to parents and nodes to positions
+      nodes_to_expand = @ids
+
+      while !nodes_to_expand.empty?
+        # Get the set of parents of the current level of nodes
+        next_nodes_to_expand = []
+
+        db[:archival_object]
+          .left_outer_join(:enumeration_value, { :level_enum__id => :archival_object__level_id }, :table_alias => :level_enum)
+          .filter(:archival_object__id => nodes_to_expand)
+          .select(Sequel.as(:archival_object__id, :id),
+                  Sequel.as(:archival_object__parent_id, :parent_id),
+                  Sequel.as(:archival_object__root_record_id, :root_record_id),
+                  Sequel.as(:archival_object__position, :position),
+                  Sequel.as(:archival_object__display_string, :display_string),
+                  Sequel.as(:archival_object__component_id, :component_id),
+                  Sequel.as(:level_enum__value, :level),
+                  Sequel.as(:archival_object__other_level, :other_level))
+          .each do |row|
+          child_to_parent_map[row[:id]] = row[:parent_id]
+          node_to_position_map[row[:id]] = row[:position]
+          node_to_data_map[row[:id]] = row
+          node_to_root_record_map[row[:id]] = row[:root_record_id]
+          next_nodes_to_expand << row[:parent_id]
+        end
+
+        nodes_to_expand = next_nodes_to_expand.compact.uniq
+      end
+
+      ## Build up the path of waypoints for each node
+      @ids.each do |node_id|
+        path = []
+
+        current_node = node_id
+        while child_to_parent_map[current_node]
+          parent_node = child_to_parent_map[current_node]
+
+          data = node_to_data_map.fetch(parent_node)
+
+          path << {"uri" => JSONModel::JSONModel(:archival_object).uri_for(parent_node, :repo_id => repo_id),
+                   "display_string" => data.fetch(:display_string),
+                   "component_id" => data.fetch(:component_id),
+                   "level" => data[:other_level] || data[:level]}
+
+          current_node = parent_node
+        end
+
+        @breadcrumbs[node_id] = path.reverse
+      end
+    end
   end
 
   def self.local_record_id(row)
