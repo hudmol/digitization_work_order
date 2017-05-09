@@ -52,13 +52,13 @@ class LadybirdExport
     # Location, YUL {fdid=100}
     {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
     # Access condition {fdid=102}
-    {:header => "{fdid=102}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=102}",           :proc => Proc.new {|row| nil}}, #BLANK!
     # Restriction {fdid=103}
     {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Barcode {fdid=105}
     {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
     # YFAD {fdid=106}
-    {:header => "{fdid=106}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=106}",           :proc => Proc.new {|row| ead_location(row)}},
     # Citation {fdid=156}
     {:header => "{fdid=156}",           :proc => Proc.new {|row| 'FIXME'}},
     # Item Permission  {fdid=180}
@@ -181,6 +181,7 @@ class LadybirdExport
     ds = ds.select_append(Sequel.as(:resource__id, :resource_id))
     ds = ds.select_append(Sequel.as(:resource__identifier, :resource_identifier))
     ds = ds.select_append(Sequel.as(:resource__title, :resource_title))
+    ds = ds.select_append(Sequel.as(:resource__ead_location, :resource_ead_location))
 
     # top container bits 
     ds = ds.select_append(Sequel.as(:top_container__indicator, :top_container_indicator))
@@ -586,6 +587,10 @@ class LadybirdExport
       .geo_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
       .join(' | ')
+  end
+
+  def self.ead_location(row)
+    row[:resource_ead_location]
   end
 
 end
