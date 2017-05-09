@@ -145,12 +145,7 @@ class LadybirdExport
   end
 
   def name_subjects_for_archival_object(id)
-    @subjects.fetch(id, [])
-      .select{|subject|
-        ASUtils.wrap(subject[:term_types]).any?{|term_type|
-          term_type == 'uniform_title'
-        }
-      }
+    @agent_subjects.fetch(id, [])
   end
 
   def topic_subjects_for_archival_object(id)
@@ -205,7 +200,7 @@ class LadybirdExport
     ds = ds.select_append(Sequel.as(:sub_container__indicator_2, :sub_container_folder))
 
     prepare_creation_dates
-    prepare_creators
+    prepare_related_agents
     prepare_extents
     prepare_notes
     prepare_breadcrumbs
@@ -263,14 +258,25 @@ class LadybirdExport
     end
   end
 
-  def prepare_creators
+  def prepare_related_agents
     @creators = {}
     @resource_creators = {}
+    @agent_subjects = {}
 
-    creator_enum_id = EnumerationValue
-                        .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
-                        .filter(:value => 'creator')
-                        .select(:id)
+    subject_enum_id = nil
+    creator_enum_id = nil
+
+    EnumerationValue
+      .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
+      .filter(Sequel.|({:value => 'creator', :value => 'subject' }))
+      .select(:id, :value)
+      .each do |row|
+      if row[:value] == 'creator'
+        creator_enum_id = row[:id]
+      elsif row[:value] == 'subject'
+        subject_enum_id = row[:id]
+      end
+    end
 
     ArchivalObject
       .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__archival_object_id => :archival_object__id)
@@ -287,8 +293,9 @@ class LadybirdExport
       .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
       .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
       .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(:linked_agents_rlshp__role_id => creator_enum_id)
+      .and(Sequel.|({:linked_agents_rlshp__role_id => creator_enum_id, :linked_agents_rlshp__role_id => subject_enum_id}))
       .select(Sequel.as(:archival_object__id, :archival_object_id),
+              Sequel.as(:linked_agents_rlshp__role_id, :role_id),
               Sequel.as(:name_person__sort_name, :person),
               Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
               Sequel.as(:name_family__sort_name, :family),
@@ -296,8 +303,13 @@ class LadybirdExport
       .distinct
       .each do |row|
 
-      @creators[row[:archival_object_id]] ||= []
-      @creators[row[:archival_object_id]] << row
+      if row[:role_id] == creator_enum_id
+        @creators[row[:archival_object_id]] ||= []
+        @creators[row[:archival_object_id]] << row
+      elsif row[:role_id] == subject_enum_id
+        @agent_subjects[row[:archival_object_id]] ||= []
+        @agent_subjects[row[:archival_object_id]] << row
+      end
     end
 
     Resource
@@ -563,7 +575,7 @@ class LadybirdExport
 
     export
       .name_subjects_for_archival_object(row[:archival_object_id])
-      .map{|row| row[:display_string]}
+      .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
       .join(' | ')
   end
 
