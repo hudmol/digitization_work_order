@@ -70,7 +70,7 @@ class LadybirdExport
     # Digital Collection {fdid=275}
     {:header => "{fdid=275}",           :proc => Proc.new {|row| nil}}, #BLANK!
     # ISO Date {fdid=280)
-    {:header => "{fdid=280}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=280}",           :proc => Proc.new {|row, export| all_years(row, export)}},
     # Content type {fdid=288}
     {:header => "{fdid=288}",           :proc => Proc.new {|row| nil}}, #BLANK!
   ]
@@ -118,6 +118,10 @@ class LadybirdExport
 
   def creation_dates_for_archival_object(id)
     @creation_dates.fetch(id, [])
+  end
+
+  def all_dates_for_archival_object(id)
+    @all_dates.fetch(id, [])
   end
 
   def extents_for_archival_object(id)
@@ -224,21 +228,30 @@ class LadybirdExport
   end
 
   def prepare_creation_dates
+    @all_dates = {}
     @creation_dates = {}
 
     creation_enum_id = EnumerationValue
                          .filter(:enumeration_id => Enumeration.filter(:name => 'date_label').select(:id))
                          .filter(:value => 'creation')
                          .select(:id)
+                         .first[:id]
 
     ASDate
       .filter(:date__archival_object_id => @ids)
-      .filter(:date__label_id => creation_enum_id)
-      .select(:archival_object_id, :expression, :begin, :end)
+      .select(:archival_object_id,
+              :expression,
+              :begin,
+              :end,
+              Sequel.as(:date__label_id, :label_id))
       .each do |row|
+      @all_dates[row[:archival_object_id]] ||= []
+      @all_dates[row[:archival_object_id]] << row
 
-      @creation_dates[row[:archival_object_id]] ||= []
-      @creation_dates[row[:archival_object_id]] << row
+      if row[:label_id] == creation_enum_id
+        @creation_dates[row[:archival_object_id]] ||= []
+        @creation_dates[row[:archival_object_id]] << row
+      end
     end
   end
 
@@ -645,6 +658,44 @@ class LadybirdExport
       }
       .compact
       .flatten
+      .join(NEW_LINE_SEPARATOR)
+  end
+
+  def self.all_years(row, export)
+    dates = export.all_dates_for_archival_object(row[:archival_object_id])
+
+    return if dates.empty?
+
+    ranges = []
+
+    dates.each do |date|
+      from = nil
+      to = nil
+
+      if date[:begin] && date[:begin] =~ /^[0-9][0-9][0-9][0-9]/
+        year = date[:begin][0..3].to_i
+        from = [from, year].compact.min
+        to = year if to.nil?
+      end
+
+      if date[:end] && date[:end] =~ /^[0-9][0-9][0-9][0-9]/
+        year = date[:end][0..3].to_i
+        from = [from, year].compact.min
+        to = [to, year].compact.max
+      end
+
+      next if from.nil?
+
+      ranges << [from, to]
+    end
+
+    return if ranges.empty?
+
+    ranges
+      .collect{|r| (r[0]..r[1]).to_a}
+      .flatten
+      .uniq
+      .sort
       .join(NEW_LINE_SEPARATOR)
   end
 
