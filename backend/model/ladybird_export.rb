@@ -66,11 +66,11 @@ class LadybirdExport
     # Studio Notes {fdid=187}
     {:header => "{fdid=187}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Digital Collection {fdid=275}
-    {:header => "{fdid=275}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=275}",           :proc => Proc.new {|row| nil}}, #BLANK!
     # ISO Date {fdid=280)
     {:header => "{fdid=280}",           :proc => Proc.new {|row| 'FIXME'}},
     # Content type {fdid=288}
-    {:header => "{fdid=288}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=288}",           :proc => Proc.new {|row| nil}}, #BLANK!
   ]
 
   def initialize(uris, resource_uri)
