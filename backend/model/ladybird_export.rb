@@ -149,21 +149,11 @@ class LadybirdExport
   end
 
   def topic_subjects_for_archival_object(id)
-    @subjects.fetch(id, [])
-      .select{|subject|
-        ASUtils.wrap(subject[:term_types]).any?{|term_type|
-          term_type == 'topical'
-        }
-      }
+    @subjects.fetch(id, []).select{|s| s[:first_term_type] == 'topical'}
   end
 
   def geo_subjects_for_archival_object(id)
-    @subjects.fetch(id, [])
-      .select{|subject|
-        ASUtils.wrap(subject[:term_types]).any?{|term_type|
-          term_type == 'geographic'
-        }
-      }
+    @subjects.fetch(id, []).select{|s| s[:first_term_type] == 'geographic'}
   end
 
 
@@ -450,18 +440,19 @@ class LadybirdExport
               Sequel.as(:subject__id, :subject_id),
               Sequel.as(:term_type_enum__value, :term_type),
               Sequel.as(:subject__title, :display_string))
+      .order(:subject__id, :subject_term__id)
       .each do |row|
       @subjects[row[:archival_object_id]] ||= []
       if current.nil? || current[:subject_id] != row[:subject_id]
         current = {
           :subject_id => row[:subject_id],
           :display_string => row[:display_string],
-          :term_types => [row[:term_type]]
+          :first_term_type => row[:term_type]
         }
 
         @subjects[row[:archival_object_id]] << current
       else
-        current[:term_types] << row[:term_type]
+        # we only care about the first term type
       end
     end
   end
