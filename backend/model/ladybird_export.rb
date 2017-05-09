@@ -2,6 +2,8 @@ require 'axlsx'
 
 class LadybirdExport
 
+  NEW_LINE_SEPARATOR = ' | '
+
   COLUMNS = [
     {:header => "{F1}",                :proc => Proc.new {|row| nil }},
     {:header => "{F2}",                :proc => Proc.new {|row| nil }},
@@ -60,7 +62,7 @@ class LadybirdExport
     # YFAD {fdid=106}
     {:header => "{fdid=106}",           :proc => Proc.new {|row| ead_location(row)}},
     # Citation {fdid=156}
-    {:header => "{fdid=156}",           :proc => Proc.new {|row| 'FIXME'}},
+    {:header => "{fdid=156}",           :proc => Proc.new {|row, export| citation_note(row, export)}},
     # Item Permission  {fdid=180}
     {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
     # Studio Notes {fdid=187}
@@ -77,6 +79,11 @@ class LadybirdExport
     @uris = uris
     @resource_uri = resource_uri
     @ids = extract_ids
+
+    parsed_resource_uri = JSONModel.parse_reference(@resource_uri)
+    @resource_id = parsed_resource_uri.fetch(:id)
+    parsed_repo_uri = JSONModel.parse_reference(parsed_resource_uri.fetch(:repository))
+    @repo_id = parsed_repo_uri.fetch(:id)
   end
 
   def to_stream
@@ -123,6 +130,10 @@ class LadybirdExport
 
   def notes_for_archival_object(id)
     @notes.fetch(id, {})
+  end
+
+  def notes_for_resource(id)
+    @resource_notes.fetch(id, {})
   end
 
   def breadcrumb_for_archival_object(id)
@@ -335,34 +346,54 @@ class LadybirdExport
 
   def prepare_notes
     @notes = {}
+    @resource_notes = {}
 
     Note
       .filter(:note__archival_object_id => @ids)
+      .or(:note__resource_id => @resource_id)
       .select(Sequel.as(:note__archival_object_id, :archival_object_id),
+              Sequel.as(:note__resource_id, :resource_id),
               Sequel.as(:note__notes, :note))
       .each do |row|
 
-      @notes[row[:archival_object_id]] ||= {}
+      if row[:archival_object_id]
+        @notes[row[:archival_object_id]] ||= {}
 
-      note = ASUtils.json_parse(row[:note])
+        parsed = parse_note(row)
 
-      type = note.fetch('type')
-      subnotes = note.fetch('subnotes', nil)
+        next if parsed.nil?
 
-      next unless subnotes
+        @notes[row[:archival_object_id]][parsed.fetch('type')] ||= []
+        @notes[row[:archival_object_id]][parsed.fetch('type')] << parsed.fetch('notes')
+      elsif row[:resource_id]
+        @resource_notes[row[:resource_id]] ||= {}
 
-      content = subnotes.collect{|n| n.fetch('content', nil)}.compact
+        parsed = parse_note(row)
 
-      @notes[row[:archival_object_id]][type] ||= []
-      @notes[row[:archival_object_id]][type] << content
+        next if parsed.nil?
+
+        @resource_notes[row[:resource_id]][parsed.fetch('type')] ||= []
+        @resource_notes[row[:resource_id]][parsed.fetch('type')] << parsed.fetch('notes')
+      end
     end
   end
 
-  def prepare_breadcrumbs
-    parsed_resource_uri = JSONModel.parse_reference(@resource_uri)
-    parsed_repo_uri = JSONModel.parse_reference(parsed_resource_uri.fetch(:repository))
-    repo_id = parsed_repo_uri.fetch(:id)
+  def parse_note(row)
+    note = ASUtils.json_parse(row[:note])
 
+    type = note.fetch('type')
+    subnotes = note.fetch('subnotes', nil)
+
+    return unless subnotes
+
+    {
+      'type' => type,
+      'notes' => subnotes.collect{|n| n.fetch('content', nil)}.compact
+    }
+  end
+
+
+  def prepare_breadcrumbs
     child_to_parent_map = {}
     node_to_position_map = {}
     node_to_root_record_map = {}
@@ -411,7 +442,7 @@ class LadybirdExport
 
           data = node_to_data_map.fetch(parent_node)
 
-          path << {"uri" => JSONModel::JSONModel(:archival_object).uri_for(parent_node, :repo_id => repo_id),
+          path << {"uri" => JSONModel::JSONModel(:archival_object).uri_for(parent_node, :repo_id => @repo_id),
                    "display_string" => data.fetch(:display_string),
                    "title" => data.fetch(:title),
                    "component_id" => data.fetch(:component_id),
@@ -496,7 +527,7 @@ class LadybirdExport
     export
       .creators_for_resource(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.host_title(row)
@@ -513,12 +544,13 @@ class LadybirdExport
       .map{|type, content|
         next if type == 'scopecontent'
         next if type == 'accessrestrict'
+        next if type == 'prefercite'
   
         content.flatten
       }
       .flatten
       .compact
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.abstract(row, export)
@@ -530,7 +562,7 @@ class LadybirdExport
       }
       .compact
       .flatten
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.title(row, export)
@@ -541,7 +573,7 @@ class LadybirdExport
     export
       .creators_for_archival_object(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.language(row)
@@ -552,14 +584,14 @@ class LadybirdExport
     export
       .creation_dates_for_archival_object(row[:archival_object_id])
       .map{|row| row[:expression] || [row[:begin], row[:end]].compact.join(' - ')}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.physical_description(row, export)
     export
       .extents_for_archival_object(row[:archival_object_id])
       .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.name_subjects(row, export)
@@ -568,7 +600,7 @@ class LadybirdExport
     export
       .name_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.topic_subjects(row, export)
@@ -577,7 +609,7 @@ class LadybirdExport
     export
       .topic_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.geo_subjects(row, export)
@@ -586,11 +618,34 @@ class LadybirdExport
     export
       .geo_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
-      .join(' | ')
+      .join(NEW_LINE_SEPARATOR)
   end
 
   def self.ead_location(row)
     row[:resource_ead_location]
+  end
+
+  def self.citation_note(row, export)
+    archival_object_citation = export
+                                .notes_for_archival_object(row[:archival_object_id])
+                                .map{|type, content|
+                                  next unless type == 'prefercite'
+                                  content.flatten
+                                }
+                                .compact
+                                .flatten
+
+    return archival_object_citation.join(NEW_LINE_SEPARATOR) unless archival_object_citation.empty?
+
+    export
+      .notes_for_resource(row[:resource_id])
+      .map{|type, content|
+        next unless type == 'prefercite'
+        content.flatten
+      }
+      .compact
+      .flatten
+      .join(NEW_LINE_SEPARATOR)
   end
 
 end
