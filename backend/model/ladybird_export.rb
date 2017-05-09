@@ -471,7 +471,7 @@ class LadybirdExport
   end
 
   def self.call_number(row)
-    JSON.parse(row[:resource_identifier]).compact.join('.')
+    JSON.parse(row[:resource_identifier]).compact.join(' ')
   end
 
   def self.box(row)
