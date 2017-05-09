@@ -4,77 +4,6 @@ class LadybirdExport
 
   NEW_LINE_SEPARATOR = ' | '
 
-  COLUMNS = [
-    {:header => "{F1}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F2}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F3}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F4}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F5}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F6}",                :proc => Proc.new {|row| nil }},
-    {:header => "{F20}",               :proc => Proc.new {|row| nil }},
-    {:header => "{F21}",               :proc => Proc.new {|row| nil }},
-    # Local record ID {fdid=56}
-    {:header => "{fdid=56}",           :proc => Proc.new {|row| local_record_id(row)}},
-    # Call number {fdid=58}
-    {:header => "{fdid=58}",           :proc => Proc.new {|row| call_number(row)}},
-    # Box {fdid=60}
-    {:header => "{fdid=60}",           :proc => Proc.new {|row| box(row)}},
-    # Folder {fdid=61}
-    {:header => "{fdid=61}",           :proc => Proc.new {|row| folder(row)}},
-    # Host, Creator {fdid=62}
-    {:header => "{fdid=62}",           :proc => Proc.new {|row, export| host_creator(row, export)}},
-    # Host, Title {fdid=63}
-    {:header => "{fdid=63}",           :proc => Proc.new {|row| host_title(row)}},
-    # Host, note {fdid=68}
-    {:header => "{fdid=68}",           :proc => Proc.new {|row, export| host_note(row, export)}},
-    # Creator {fdid=69}
-    {:header => "{fdid=69}",           :proc => Proc.new {|row, export| creator(row, export)}},
-    # Title {fdid=70}
-    {:header => "{fdid=70}",           :proc => Proc.new {|row, export| title(row, export)}},
-    # Date, created {fdid=79}
-    {:header => "{fdid=79}",           :proc => Proc.new {|row, export| creation_date(row, export)}},
-    # Physical description {fdid=82}
-    {:header => "{fdid=82}",           :proc => Proc.new {|row, export| physical_description(row, export)}},
-    # Language {fdid=84}
-    {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
-    # Note {fdid=86}
-    {:header => "{fdid=86}",           :proc => Proc.new {|row, export| note(row, export)}},
-    # Abstract {fdid=87}
-    {:header => "{fdid=87}",           :proc => Proc.new {|row, export| abstract(row, export)}},
-    # Subject, name {fdid=88}
-    {:header => "{fdid=88}",           :proc => Proc.new {|row, export| name_subjects(row, export)}},
-    # Subject, topic {fdid=90}
-    {:header => "{fdid=90}",           :proc => Proc.new {|row, export| topic_subjects(row, export)}},
-    # Subject, geographic {fdid=91}
-    {:header => "{fdid=91}",           :proc => Proc.new {|row, export| geo_subjects(row, export)}},
-    # Genre {fdid=98}
-    {:header => "{fdid=98}",           :proc => Proc.new {|row| nil }}, #BLANK!
-    # Type of resource {fdid=99}
-    {:header => "{fdid=99}",           :proc => Proc.new {|row| nil }}, #BLANK!
-    # Location, YUL {fdid=100}
-    {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
-    # Access condition {fdid=102}
-    {:header => "{fdid=102}",           :proc => Proc.new {|row| nil}}, #BLANK!
-    # Restriction {fdid=103}
-    {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
-    # Barcode {fdid=105}
-    {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
-    # YFAD {fdid=106}
-    {:header => "{fdid=106}",           :proc => Proc.new {|row| ead_location(row)}},
-    # Citation {fdid=156}
-    {:header => "{fdid=156}",           :proc => Proc.new {|row, export| citation_note(row, export)}},
-    # Item Permission  {fdid=180}
-    {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
-    # Studio Notes {fdid=187}
-    {:header => "{fdid=187}",           :proc => Proc.new {|row| nil }}, #BLANK!
-    # Digital Collection {fdid=275}
-    {:header => "{fdid=275}",           :proc => Proc.new {|row| nil}}, #BLANK!
-    # ISO Date {fdid=280)
-    {:header => "{fdid=280}",           :proc => Proc.new {|row, export| all_years(row, export)}},
-    # Content type {fdid=288}
-    {:header => "{fdid=288}",           :proc => Proc.new {|row| nil}}, #BLANK!
-  ]
-
   def initialize(uris, resource_uri)
     @uris = uris
     @resource_uri = resource_uri
@@ -86,6 +15,79 @@ class LadybirdExport
     @repo_id = parsed_repo_uri.fetch(:id)
   end
 
+  def column_definitions
+    [
+      {:header => "{F1}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F2}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F3}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F4}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F5}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F6}",                :proc => Proc.new {|row| nil }},
+      {:header => "{F20}",               :proc => Proc.new {|row| nil }},
+      {:header => "{F21}",               :proc => Proc.new {|row| nil }},
+      # Local record ID {fdid=56}
+      {:header => "{fdid=56}",           :proc => Proc.new {|row| local_record_id(row)}},
+      # Call number {fdid=58}
+      {:header => "{fdid=58}",           :proc => Proc.new {|row| call_number(row)}},
+      # Box {fdid=60}
+      {:header => "{fdid=60}",           :proc => Proc.new {|row| box(row)}},
+      # Folder {fdid=61}
+      {:header => "{fdid=61}",           :proc => Proc.new {|row| folder(row)}},
+      # Host, Creator {fdid=62}
+      {:header => "{fdid=62}",           :proc => Proc.new {|row| host_creator(row)}},
+      # Host, Title {fdid=63}
+      {:header => "{fdid=63}",           :proc => Proc.new {|row| host_title(row)}},
+      # Host, note {fdid=68}
+      {:header => "{fdid=68}",           :proc => Proc.new {|row| host_note(row)}},
+      # Creator {fdid=69}
+      {:header => "{fdid=69}",           :proc => Proc.new {|row| creator(row)}},
+      # Title {fdid=70}
+      {:header => "{fdid=70}",           :proc => Proc.new {|row| title(row)}},
+      # Date, created {fdid=79}
+      {:header => "{fdid=79}",           :proc => Proc.new {|row| creation_date(row)}},
+      # Physical description {fdid=82}
+      {:header => "{fdid=82}",           :proc => Proc.new {|row| physical_description(row)}},
+      # Language {fdid=84}
+      {:header => "{fdid=84}",           :proc => Proc.new {|row| language(row)}},
+      # Note {fdid=86}
+      {:header => "{fdid=86}",           :proc => Proc.new {|row| note(row)}},
+      # Abstract {fdid=87}
+      {:header => "{fdid=87}",           :proc => Proc.new {|row| abstract(row)}},
+      # Subject, name {fdid=88}
+      {:header => "{fdid=88}",           :proc => Proc.new {|row| name_subjects(row)}},
+      # Subject, topic {fdid=90}
+      {:header => "{fdid=90}",           :proc => Proc.new {|row| topic_subjects(row)}},
+      # Subject, geographic {fdid=91}
+      {:header => "{fdid=91}",           :proc => Proc.new {|row| geo_subjects(row)}},
+      # Genre {fdid=98}
+      {:header => "{fdid=98}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # Type of resource {fdid=99}
+      {:header => "{fdid=99}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # Location, YUL {fdid=100}
+      {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
+      # Access condition {fdid=102}
+      {:header => "{fdid=102}",           :proc => Proc.new {|row| nil}}, #BLANK!
+      # Restriction {fdid=103}
+      {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # Barcode {fdid=105}
+      {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
+      # YFAD {fdid=106}
+      {:header => "{fdid=106}",           :proc => Proc.new {|row| ead_location(row)}},
+      # Citation {fdid=156}
+      {:header => "{fdid=156}",           :proc => Proc.new {|row| citation_note(row)}},
+      # Item Permission  {fdid=180}
+      {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # Studio Notes {fdid=187}
+      {:header => "{fdid=187}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # Digital Collection {fdid=275}
+      {:header => "{fdid=275}",           :proc => Proc.new {|row| nil}}, #BLANK!
+      # ISO Date {fdid=280)
+      {:header => "{fdid=280}",           :proc => Proc.new {|row| all_years(row)}},
+      # Content type {fdid=288}
+      {:header => "{fdid=288}",           :proc => Proc.new {|row| nil}}, #BLANK!
+    ]
+  end
+
   def to_stream
     p = Axlsx::Package.new
     wb = p.workbook
@@ -93,7 +95,7 @@ class LadybirdExport
     wb.add_worksheet(:name => 'Digitization Work Order') do |sheet|
       highlight = sheet.styles.add_style :bg_color => "E8F4FF"
 
-      sheet.add_row COLUMNS.collect{|col| col.fetch(:header)}
+      sheet.add_row column_definitions.collect{|col| col.fetch(:header)}
       dataset.each do |row|
         row_style = nil
 
@@ -101,7 +103,7 @@ class LadybirdExport
           row_style = highlight
         end
 
-        sheet.add_row COLUMNS.map {|col| col[:proc].call(row, self) }, :style => row_style
+        sheet.add_row column_definitions.map {|col| col[:proc].call(row, self) }, :style => row_style
       end
     end
 
@@ -516,44 +518,42 @@ class LadybirdExport
     end
   end
 
-  def self.local_record_id(row)
+  def local_record_id(row)
     "/repositories/#{row[:repo_id]}/archival_objects/#{row[:archival_object_id]}"
   end
 
-  def self.call_number(row)
+  def call_number(row)
     JSON.parse(row[:resource_identifier]).compact.join(' ')
   end
 
-  def self.box(row)
+  def box(row)
     row[:top_container_indicator]
   end
 
-  def self.barcode(row)
+  def barcode(row)
     row[:top_container_barcode]
   end
 
-  def self.folder(row)
+  def folder(row)
     row[:sub_container_folder]
   end
 
-  def self.host_creator(row, export)
-    export
-      .creators_for_resource(row[:archival_object_id])
+  def host_creator(row)
+    creators_for_resource(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.host_title(row)
+  def host_title(row)
     row[:resource_title]
   end
 
-  def self.host_note(row, export)
-    export.breadcrumb_for_archival_object(row[:archival_object_id])
+  def host_note(row)
+    breadcrumb_for_archival_object(row[:archival_object_id])
   end
 
-  def self.note(row, export)
-    export
-      .notes_for_archival_object(row[:archival_object_id])
+  def note(row)
+    notes_for_archival_object(row[:archival_object_id])
       .map{|type, content|
         next if type == 'scopecontent'
         next if type == 'accessrestrict'
@@ -566,9 +566,8 @@ class LadybirdExport
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.abstract(row, export)
-    export
-      .notes_for_archival_object(row[:archival_object_id])
+  def abstract(row)
+    notes_for_archival_object(row[:archival_object_id])
       .map{|type, content|
         next unless type == 'scopecontent'
         content.flatten
@@ -578,69 +577,62 @@ class LadybirdExport
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.title(row, export)
+  def title(row)
     row[:archival_object_title]
   end
 
-  def self.creator(row, export)
-    export
-      .creators_for_archival_object(row[:archival_object_id])
+  def creator(row)
+    creators_for_archival_object(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.language(row)
+  def language(row)
     row[:archival_object_language]
   end
 
-  def self.creation_date(row, export)
-    export
-      .creation_dates_for_archival_object(row[:archival_object_id])
+  def creation_date(row)
+    creation_dates_for_archival_object(row[:archival_object_id])
       .map{|row| row[:expression] || [row[:begin], row[:end]].compact.join(' - ')}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.physical_description(row, export)
-    export
-      .extents_for_archival_object(row[:archival_object_id])
+  def physical_description(row)
+    extents_for_archival_object(row[:archival_object_id])
       .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.name_subjects(row, export)
+  def name_subjects(row)
     return if row[:archival_object_level] != 'item'
 
-    export
-      .name_subjects_for_archival_object(row[:archival_object_id])
+    name_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.topic_subjects(row, export)
+  def topic_subjects(row)
     return if row[:archival_object_level] != 'item'
 
-    export
-      .topic_subjects_for_archival_object(row[:archival_object_id])
+    topic_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.geo_subjects(row, export)
+  def geo_subjects(row)
     return if row[:archival_object_level] != 'item'
 
-    export
-      .geo_subjects_for_archival_object(row[:archival_object_id])
+    geo_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.ead_location(row)
+  def ead_location(row)
     row[:resource_ead_location]
   end
 
-  def self.citation_note(row, export)
-    archival_object_citation = export
-                                .notes_for_archival_object(row[:archival_object_id])
+  def citation_note(row)
+    archival_object_citation = notes_for_archival_object(row[:archival_object_id])
                                 .map{|type, content|
                                   next unless type == 'prefercite'
                                   content.flatten
@@ -650,8 +642,7 @@ class LadybirdExport
 
     return archival_object_citation.join(NEW_LINE_SEPARATOR) unless archival_object_citation.empty?
 
-    export
-      .notes_for_resource(row[:resource_id])
+    notes_for_resource(row[:resource_id])
       .map{|type, content|
         next unless type == 'prefercite'
         content.flatten
@@ -661,8 +652,8 @@ class LadybirdExport
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def self.all_years(row, export)
-    dates = export.all_dates_for_archival_object(row[:archival_object_id])
+  def all_years(row)
+    dates = all_dates_for_archival_object(row[:archival_object_id])
 
     return if dates.empty?
 
