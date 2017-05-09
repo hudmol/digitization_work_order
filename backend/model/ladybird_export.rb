@@ -128,7 +128,7 @@ class LadybirdExport
   def breadcrumb_for_archival_object(id)
     crumbs = @breadcrumbs.fetch(id)
     crumbs.collect{|ao|
-      display_string = ao.fetch('display_string')
+      display_string = ao.fetch('title') || ao.fetch('display_string')
 
       # RULE:
       # Only include "Series X" if the component unique identifier has been
@@ -382,6 +382,7 @@ class LadybirdExport
                   Sequel.as(:archival_object__parent_id, :parent_id),
                   Sequel.as(:archival_object__root_record_id, :root_record_id),
                   Sequel.as(:archival_object__position, :position),
+                  Sequel.as(:archival_object__title, :title),
                   Sequel.as(:archival_object__display_string, :display_string),
                   Sequel.as(:archival_object__component_id, :component_id),
                   Sequel.as(:level_enum__value, :level),
@@ -409,6 +410,7 @@ class LadybirdExport
 
           path << {"uri" => JSONModel::JSONModel(:archival_object).uri_for(parent_node, :repo_id => repo_id),
                    "display_string" => data.fetch(:display_string),
+                   "title" => data.fetch(:title),
                    "component_id" => data.fetch(:component_id),
                    "level" => data[:other_level] || data[:level]}
 
@@ -528,7 +530,6 @@ class LadybirdExport
   end
 
   def self.title(row, export)
-    # FIXME need to append dates or show date if no title?
     row[:archival_object_title]
   end
 
