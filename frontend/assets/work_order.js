@@ -3,7 +3,7 @@ var setupButtonASpace15 = function() {
   $workOrder = $(AS.renderTemplate("workOrderButtonTemplate"));
 
   /* ArchivesSpace 1.5.x */
-  $workOrder.addClass("btn btn-sm btn-default");
+  $workOrder.addClass("btn btn-xs btn-default");
   var $btnGroup = $("<div>").addClass("btn-group");
 
   $workOrder.appendTo($btnGroup);
