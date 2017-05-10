@@ -24,15 +24,12 @@ class ArchivesSpaceService < Sinatra::Base
   end
 
 
-  # FIXME: make post only after dev'ing
-  # FIXME add permission when done dev'ing # FIXME add permission when done dev'ing:
-  #   .permissions([:view_repository])
-  Endpoint.get_or_post('/plugins/digitization_work_order/repositories/:repo_id/ladybird')
+  Endpoint.post('/plugins/digitization_work_order/repositories/:repo_id/ladybird')
     .description("Return Excel formatted export for record uris")
     .params(["repo_id", :repo_id],
             ["uri", [String], "The uris of the records to include in the report"],
             ["resource_uri", String, "The resource URI"])
-    .permissions([])
+    .permissions([:view_repository])
     .returns([200, "report"]) \
   do
     [
