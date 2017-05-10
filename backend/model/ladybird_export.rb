@@ -17,14 +17,14 @@ class LadybirdExport
 
   def column_definitions
     [
-      {:header => "{F1}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F2}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F3}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F4}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F5}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F6}",                :proc => Proc.new {|row| nil }},
-      {:header => "{F20}",               :proc => Proc.new {|row| nil }},
-      {:header => "{F21}",               :proc => Proc.new {|row| nil }},
+      {:header => "{F1}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F2}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F3}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F4}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F5}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F6}",                :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F20}",               :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "{F21}",               :proc => Proc.new {|row| nil }}, #BLANK!
       # Local record ID {fdid=56}
       {:header => "{fdid=56}",           :proc => Proc.new {|row| local_record_id(row)}},
       # Call number {fdid=58}
