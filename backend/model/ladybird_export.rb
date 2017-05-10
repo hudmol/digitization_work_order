@@ -96,6 +96,13 @@ class LadybirdExport
       highlight = sheet.styles.add_style :bg_color => "E8F4FF"
 
       sheet.add_row column_definitions.collect{|col| col.fetch(:header)}
+
+      # PLEASE NOTE
+      # `dataset` hits the database to return all the instance rows but it also
+      # fire a series of extra queries from which we aggregate all multi-valued
+      # fields required for the report. These values are stored as instance
+      # variables and as such many of the helper methods will only return data
+      # once `dataset` has been called.
       dataset.each do |row|
         row_style = nil
 
