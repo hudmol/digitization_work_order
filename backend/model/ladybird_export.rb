@@ -292,7 +292,7 @@ class LadybirdExport
 
     EnumerationValue
       .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
-      .filter(Sequel.|({:value => 'creator', :value => 'subject' }))
+      .filter(:value => ['creator', 'subject'])
       .select(:id, :value)
       .each do |row|
       if row[:value] == 'creator'
