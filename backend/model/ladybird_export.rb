@@ -454,7 +454,6 @@ class LadybirdExport
         nodes_to_expand = next_nodes_to_expand.compact.uniq
       end
 
-      ## Build up the path of waypoints for each node
       @ids.each do |node_id|
         path = []
 
