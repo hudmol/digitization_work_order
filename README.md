@@ -1,11 +1,15 @@
 Digitization Work Order Plugin
 -----------------------------------
 
-This is an ArchivesSpace plugin that provides the ability to download TSV reports for sets of components under a resource for the purpose of creating digitization work orders.
+This is an ArchivesSpace plugin that provides the ability to download reports for sets of components under a resource for the purpose of creating digitization work orders.
 
-When a work order is downloaded, component unique identifiers will be generated for components that don't have one. The plugin ships with a default id generator. See the section below on how to provide your own generator.
+There are two forms of report, selectable via a configuration option.
 
-This plugin was developed against ArchivesSpace v1.5.0-RC3 by Hudson Molonglo for New York University.
+The default report is a TSV file. When this work order is downloaded, component unique identifiers will be generated for components that don't have one. The plugin ships with a default id generator. See the section below on how to provide your own generator.
+
+The alternative form of the report is an xlsx file suitable for importing into Yale's Ladybird system.
+
+This plugin was developed by Hudson Molonglo for New York University and Yale University. It will run under ArchivesSpace versions v1.5.x and v2.1.x.
 
 
 # Getting Started
@@ -32,6 +36,13 @@ Enable the plugin by editing the file in `config/config.rb`:
 See also:
 
   https://github.com/archivesspace/archivesspace/blob/master/plugins/README.md
+
+
+# Configuring it
+
+To use the Ladybird form of the report, set the following configuration option in config.rb:
+
+    AppConfig[:digitization_work_order_ladybird] = true
 
 
 # How it works
