@@ -110,7 +110,7 @@ class LadybirdExport
           row_style = highlight
         end
 
-        sheet.add_row column_definitions.map {|col| col[:proc].call(row, self) }, :style => row_style
+        sheet.add_row column_definitions.map {|col| col[:proc].call(row) }, :style => row_style
       end
     end
 
