@@ -610,24 +610,18 @@ class LadybirdExport
   end
 
   def name_subjects(row)
-    return if row[:archival_object_level] != 'item'
-
     name_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
       .join(NEW_LINE_SEPARATOR)
   end
 
   def topic_subjects(row)
-    return if row[:archival_object_level] != 'item'
-
     topic_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
       .join(NEW_LINE_SEPARATOR)
   end
 
   def geo_subjects(row)
-    return if row[:archival_object_level] != 'item'
-
     geo_subjects_for_archival_object(row[:archival_object_id])
       .map{|row| row[:display_string]}
       .join(NEW_LINE_SEPARATOR)
