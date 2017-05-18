@@ -158,13 +158,10 @@ class LadybirdExport
       # Only include "Series X" if the component unique identifier has been
       # filled out in ASpace (otherwise, just include the title)
       if ao.fetch('level') == 'series' && !ao.fetch('component_id', nil).nil?
-        # only prepend title with "Series" (if not already there)
-        unless display_string.start_with?('Series')
-          display_string = "Series #{display_string}"
-        end
+        display_string = "Series #{ao.fetch('component_id')} #{display_string}"
       end
 
-      display_string
+      strip_html(display_string)
     }.join('. ')
   end
 
@@ -551,7 +548,7 @@ class LadybirdExport
   end
 
   def host_title(row)
-    row[:resource_title]
+    strip_html(row[:resource_title])
   end
 
   def host_note(row)
@@ -584,7 +581,7 @@ class LadybirdExport
   end
 
   def title(row)
-    row[:archival_object_title]
+    strip_html(row[:archival_object_title])
   end
 
   def creator(row)
@@ -688,6 +685,12 @@ class LadybirdExport
       .uniq
       .sort
       .join(NEW_LINE_SEPARATOR)
+  end
+
+  def strip_html(string)
+    return if string.nil?
+
+    string.gsub(/<\/?[^>]*>/, "")
   end
 
 end
