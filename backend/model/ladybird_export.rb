@@ -103,14 +103,18 @@ class LadybirdExport
       # fields required for the report. These values are stored as instance
       # variables and as such many of the helper methods will only return data
       # once `dataset` has been called.
-      dataset.each do |row|
-        row_style = nil
+      all_rows = dataset.all
+      @ids.each do |id|
+        all_rows.select {|row| row[:archival_object_id] == id }.each do |row|
+          row_style = nil
 
-        if has_digital_object_instances?(row[:archival_object_id])
-          row_style = highlight
+          if has_digital_object_instances?(row[:archival_object_id])
+            row_style = highlight
+          end
+
+          sheet.add_row column_definitions.map {|col| col[:proc].call(row) }, :style => row_style
+
         end
-
-        sheet.add_row column_definitions.map {|col| col[:proc].call(row) }, :style => row_style
       end
     end
 
