@@ -158,11 +158,27 @@ class LadybirdExport
       # Only include "Series X" if the component unique identifier has been
       # filled out in ASpace (otherwise, just include the title)
       if ao.fetch('level') == 'series' && !ao.fetch('component_id', nil).nil?
-        display_string = "Series #{ao.fetch('component_id')} #{display_string}"
+        display_string = "Series #{romanize(ao.fetch('component_id'))}. #{display_string}"
       end
 
       strip_html(display_string)
     }.join('. ')
+  end
+
+  def romanize(number)
+    # based on code seen at:
+    # https://stackoverflow.com/questions/26092510/roman-numerals-in-ruby
+    n = number.to_i
+    return number if n == 0
+
+    @romans ||= { 1000 => "M", 900 => "CM", 500 => "D", 400 => "CD", 100 => "C",
+                  90 => "XC", 50 => "L", 40 => "XL", 10 => "X",
+                  9 => "IX", 5 => "V", 4 => "IV", 1 => "I" } 
+
+    @romans.reduce("") do |res, (arab, roman)|
+      whole_part, n = n.divmod(arab)
+      res << roman * whole_part
+    end
   end
 
   def name_subjects_for_archival_object(id)
