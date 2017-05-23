@@ -602,7 +602,7 @@ class LadybirdExport
 
   def physical_description(row)
     extents_for_archival_object(row[:archival_object_id])
-      .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
+      .map{|row| "#{row[:number]} #{I18n.t('enumerations.extent_extent_type.'+row[:extent_type])} (#{row[:portion]})" }
       .join(NEW_LINE_SEPARATOR)
   end
 
