@@ -368,6 +368,7 @@ class LadybirdExport
     @resource_notes = {}
 
     Note
+      .filter(:publish => 1)
       .filter(:note__archival_object_id => @ids)
       .or(:note__resource_id => @resource_id)
       .select(Sequel.as(:note__archival_object_id, :archival_object_id),
