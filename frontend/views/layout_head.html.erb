@@ -1,4 +1,4 @@
-<% if @resource && controller_name == 'resources' && action_name == 'show' %>
+<% if @resource && controller_name == 'resources' && ['show', 'edit'].include?(action_name) %>
   <%= stylesheet_link_tag "#{AppConfig[:frontend_prefix]}assets/work_order.css" %>
   <%= javascript_include_tag "#{AppConfig[:frontend_prefix]}assets/work_order.js" %>
   <script type="text/template" id="workOrderButtonTemplate">
