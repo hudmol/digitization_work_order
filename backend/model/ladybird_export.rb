@@ -64,7 +64,7 @@ class LadybirdExport
       # Type of resource {fdid=99}
       {:header => "{fdid=99}",           :proc => Proc.new {|row| nil }}, #BLANK!
       # Location, YUL {fdid=100}
-      {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Rare Book and Manuscript Library, Yale University {id=159091}'}},
+      {:header => "{fdid=100}",           :proc => Proc.new {|row| 'Beinecke Library {id=294468}'}},
       # Access condition {fdid=102}
       {:header => "{fdid=102}",           :proc => Proc.new {|row| nil}}, #BLANK!
       # Restriction {fdid=103}
