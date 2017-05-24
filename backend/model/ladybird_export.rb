@@ -103,7 +103,7 @@ class LadybirdExport
       # fields required for the report. These values are stored as instance
       # variables and as such many of the helper methods will only return data
       # once `dataset` has been called.
-      dataset.each do |row|
+      dataset.all.sort{|x,y| @ids.index(x[:archival_object_id]) <=> @ids.index(y[:archival_object_id])}.each do |row|
         row_style = nil
 
         if has_digital_object_instances?(row[:archival_object_id])
@@ -111,6 +111,7 @@ class LadybirdExport
         end
 
         sheet.add_row column_definitions.map {|col| col[:proc].call(row) }, :style => row_style
+
       end
     end
 
@@ -158,11 +159,27 @@ class LadybirdExport
       # Only include "Series X" if the component unique identifier has been
       # filled out in ASpace (otherwise, just include the title)
       if ao.fetch('level') == 'series' && !ao.fetch('component_id', nil).nil?
-        display_string = "Series #{ao.fetch('component_id')} #{display_string}"
+        display_string = "Series #{romanize(ao.fetch('component_id'))}. #{display_string}"
       end
 
       strip_html(display_string)
     }.join('. ')
+  end
+
+  def romanize(number)
+    # based on code seen at:
+    # https://stackoverflow.com/questions/26092510/roman-numerals-in-ruby
+    n = number.to_i
+    return number if n == 0
+
+    @romans ||= { 1000 => "M", 900 => "CM", 500 => "D", 400 => "CD", 100 => "C",
+                  90 => "XC", 50 => "L", 40 => "XL", 10 => "X",
+                  9 => "IX", 5 => "V", 4 => "IV", 1 => "I" } 
+
+    @romans.reduce("") do |res, (arab, roman)|
+      whole_part, n = n.divmod(arab)
+      res << roman * whole_part
+    end
   end
 
   def name_subjects_for_archival_object(id)
@@ -368,6 +385,7 @@ class LadybirdExport
     @resource_notes = {}
 
     Note
+      .filter(:publish => 1)
       .filter(:note__archival_object_id => @ids)
       .or(:note__resource_id => @resource_id)
       .select(Sequel.as(:note__archival_object_id, :archival_object_id),
@@ -601,9 +619,13 @@ class LadybirdExport
   end
 
   def physical_description(row)
-    extents_for_archival_object(row[:archival_object_id])
-      .map{|row| "#{row[:number]} #{row[:extent_type]} (#{row[:portion]})" }
-      .join(NEW_LINE_SEPARATOR)
+    extents_for_archival_object(row[:archival_object_id]).map{|row|
+      type = I18n.t("enumerations.extent_extent_type.#{row[:extent_type]}",
+                    :default => row[:extent_type])
+      portion = I18n.t("enumerations.extent_portion.#{row[:portion]}",
+                       :default => row[:portion])
+      "#{row[:number]} #{type} (#{portion})"
+    }.join(NEW_LINE_SEPARATOR)
   end
 
   def name_subjects(row)
