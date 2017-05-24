@@ -622,9 +622,13 @@ class LadybirdExport
   end
 
   def physical_description(row)
-    extents_for_archival_object(row[:archival_object_id])
-      .map{|row| "#{row[:number]} #{I18n.t('enumerations.extent_extent_type.'+row[:extent_type])} (#{row[:portion]})" }
-      .join(NEW_LINE_SEPARATOR)
+    extents_for_archival_object(row[:archival_object_id]).map{|row|
+      type = I18n.t("enumerations.extent_extent_type.#{row[:extent_type]}",
+                    :default => row[:extent_type])
+      portion = I18n.t("enumerations.extent_portion.#{row[:portion]}",
+                       :default => row[:portion])
+      "#{row[:number]} #{type} (#{portion})"
+    }.join(NEW_LINE_SEPARATOR)
   end
 
   def name_subjects(row)
