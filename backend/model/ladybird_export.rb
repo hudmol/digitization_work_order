@@ -1,4 +1,4 @@
-require 'axlsx'
+require 'write_xlsx'
 
 class LadybirdExport
 
@@ -89,33 +89,36 @@ class LadybirdExport
   end
 
   def to_stream
-    p = Axlsx::Package.new
-    wb = p.workbook
+    io = StringIO.new
+    wb = WriteXLSX.new(io)
 
-    wb.add_worksheet(:name => 'Digitization Work Order') do |sheet|
-      highlight = sheet.styles.add_style :bg_color => "E8F4FF"
+    sheet = wb.add_worksheet('Digitization Work Order')
 
-      sheet.add_row column_definitions.collect{|col| col.fetch(:header)}
+    hl_color = wb.set_custom_color(15, '#E8F4FF')
+    highlight = wb.add_format(:bg_color => 15)
 
-      # PLEASE NOTE
-      # `dataset` hits the database to return all the instance rows but it also
-      # fire a series of extra queries from which we aggregate all multi-valued
-      # fields required for the report. These values are stored as instance
-      # variables and as such many of the helper methods will only return data
-      # once `dataset` has been called.
-      dataset.all.sort{|x,y| @ids.index(x[:archival_object_id]) <=> @ids.index(y[:archival_object_id])}.each do |row|
-        row_style = nil
+    row_ix = 0
+    sheet.write_row(row_ix, 0, column_definitions.collect{|col| col.fetch(:header)})
 
-        if has_digital_object_instances?(row[:archival_object_id])
-          row_style = highlight
-        end
-
-        sheet.add_row column_definitions.map {|col| col[:proc].call(row) }, :style => row_style
-
+    # PLEASE NOTE
+    # `dataset` hits the database to return all the instance rows but it also
+    # fire a series of extra queries from which we aggregate all multi-valued
+    # fields required for the report. These values are stored as instance
+    # variables and as such many of the helper methods will only return data
+    # once `dataset` has been called.
+    dataset.all.sort{|x,y| @ids.index(x[:archival_object_id]) <=> @ids.index(y[:archival_object_id])}.each do |row|
+      row_ix += 1
+      row_style = nil
+      
+      if has_digital_object_instances?(row[:archival_object_id])
+        row_style = highlight
       end
+
+      sheet.write_row(row_ix, 0, column_definitions.map {|col| col[:proc].call(row) }, row_style)
     end
 
-    p.to_stream
+    wb.close
+    io.string
   end
 
   def has_digital_object_instances?(id)
