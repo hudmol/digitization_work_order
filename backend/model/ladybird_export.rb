@@ -25,8 +25,10 @@ class LadybirdExport
       {:header => "{F6}",                :proc => Proc.new {|row| nil }}, #BLANK!
       {:header => "{F20}",               :proc => Proc.new {|row| nil }}, #BLANK!
       {:header => "{F21}",               :proc => Proc.new {|row| nil }}, #BLANK!
-      # Local record ID {fdid=56}
-      {:header => "{fdid=56}",           :proc => Proc.new {|row| local_record_id(row)}},
+      # Cataloger(LadyBird) {fdid=51}
+      {:header => "{fdid=51}",           :proc => Proc.new {|row| nil }}, #BLANK! NEW
+      # Local record ID {fdid=57}
+      {:header => "{fdid=57}",           :proc => Proc.new {|row| local_record_id(row)}}, # NEW ish -- was 56 but needed to be moved to 57
       # Call number {fdid=58}
       {:header => "{fdid=58}",           :proc => Proc.new {|row| call_number(row)}},
       # Box {fdid=60}
@@ -37,12 +39,16 @@ class LadybirdExport
       {:header => "{fdid=62}",           :proc => Proc.new {|row| host_creator(row)}},
       # Host, Title {fdid=63}
       {:header => "{fdid=63}",           :proc => Proc.new {|row| host_title(row)}},
+      # Dates Inclusive/Bulk {fdid=66}
+      {:header => "{fdid=66}",           :proc => Proc.new {|row| creation_years(row)}},
       # Host, note {fdid=68}
       {:header => "{fdid=68}",           :proc => Proc.new {|row| host_note(row)}},
       # Creator {fdid=69}
       {:header => "{fdid=69}",           :proc => Proc.new {|row| creator(row)}},
       # Title {fdid=70}
       {:header => "{fdid=70}",           :proc => Proc.new {|row| title(row)}},
+      # Parts Scanned(LadyBird) {fdid=75}
+      {:header => "{fdid=75}",           :proc => Proc.new {|row| nil }}, #BLANK! NEW
       # Date, created {fdid=79}
       {:header => "{fdid=79}",           :proc => Proc.new {|row| creation_date(row)}},
       # Physical description {fdid=82}
@@ -69,12 +75,16 @@ class LadybirdExport
       {:header => "{fdid=102}",           :proc => Proc.new {|row| nil}}, #BLANK!
       # Restriction {fdid=103}
       {:header => "{fdid=103}",           :proc => Proc.new {|row| nil }}, #BLANK!
+      # BibID(LadyBird) {fdid=104}
+      {:header => "{fdid=104}",           :proc => Proc.new {|row| nil }}, #BLANK! NEW
       # Barcode {fdid=105}
       {:header => "{fdid=105}",           :proc => Proc.new {|row| barcode(row)}},
       # YFAD {fdid=106}
       {:header => "{fdid=106}",           :proc => Proc.new {|row| ead_location(row)}},
       # Citation {fdid=156}
       {:header => "{fdid=156}",           :proc => Proc.new {|row| citation_note(row)}},
+      # Digital Format(LadyBird) {fdid=157}
+      {:header => "{fdid=157}",           :proc => Proc.new {|row| 'image/tiff' }}, # NEW
       # Item Permission  {fdid=180}
       {:header => "{fdid=180}",           :proc => Proc.new {|row| nil }}, #BLANK!
       # Studio Notes {fdid=187}
@@ -85,6 +95,14 @@ class LadybirdExport
       {:header => "{fdid=280}",           :proc => Proc.new {|row| all_years(row)}},
       # Content type {fdid=288}
       {:header => "{fdid=288}",           :proc => Proc.new {|row| nil}}, #BLANK!
+      # Start Date {fdid=308}
+      # just the start date from 288 if 288 exists. If n.d, remain blank like 288
+      # HM: assuming this should say "280" because 288 is BLANK
+      {:header => "{fdid=308}",           :proc => Proc.new {|row| start_year(row)}}, 
+      # End Date {fdid=309} 
+      # the end date from 288 if 288 exists. If n.d., remain blank like 288 does
+      # HM: assuming this should say "280" because 288 is BLANK
+      {:header => "{fdid=309}",           :proc => Proc.new {|row| end_year(row)}},
     ]
   end
 
@@ -263,18 +281,29 @@ class LadybirdExport
                          .select(:id)
                          .first[:id]
 
+    bulk_type_enum_id = EnumerationValue
+                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_type').select(:id))
+                         .filter(:value => 'bulk')
+                         .select(:id)
+                         .first[:id]
+
     ASDate
       .filter(:date__archival_object_id => @ids)
       .select(:archival_object_id,
               :expression,
               :begin,
               :end,
+              Sequel.as(:date__date_type_id, :date_type_id),
               Sequel.as(:date__label_id, :label_id))
       .each do |row|
       @all_dates[row[:archival_object_id]] ||= []
       @all_dates[row[:archival_object_id]] << row
 
       if row[:label_id] == creation_enum_id
+        if row[:date_type_id] == bulk_type_enum_id
+          row[:bulk] = true
+        end
+
         @creation_dates[row[:archival_object_id]] ||= []
         @creation_dates[row[:archival_object_id]] << row
       end
@@ -674,7 +703,15 @@ class LadybirdExport
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def all_years(row)
+  def start_year(row)
+    all_years(row, :start)
+  end
+
+  def end_year(row)
+    all_years(row, :end)
+  end
+
+  def all_years(row, mode = :range)
     dates = all_dates_for_archival_object(row[:archival_object_id])
 
     return if dates.empty?
@@ -704,12 +741,42 @@ class LadybirdExport
 
     return if ranges.empty?
 
-    ranges
+    full_range = ranges
       .collect{|r| (r[0]..r[1]).to_a}
       .flatten
       .uniq
       .sort
-      .join(NEW_LINE_SEPARATOR)
+
+    case mode
+    when :start
+      full_range.first
+    when :end
+      full_range.last
+    else
+      full_range.join(NEW_LINE_SEPARATOR)
+    end
+  end
+
+  # What we'd like here is the dates from the Creation dates field formated as Inclusive/Single Date(s) (Bulk: Bulk Dates) if Bulk exists
+  # ex. 1924-1967 (Bulk: 1930-1939) or 1851 Nov. 3 or 1851-1853
+  # HM: assuming only zero or one non-bulk and zero or none bulk creation dates (i.e. only looking at the first of each)
+  def creation_years(row)
+    dates = creation_dates_for_archival_object(row[:archival_object_id])
+
+    return if dates.empty?
+
+    non_bulk = dates.select{|d| !d[:bulk]}.first
+    bulk = dates.select{|d| d[:bulk]}.first
+
+    def fmt_date(date) 
+      date[:expression] || [date[:begin].sub(/-.*/, ''), date[:end].sub(/-.*/, '')].compact.join('-')
+    end
+
+    out = ''
+    out = fmt_date(non_bulk) if non_bulk
+    out += " (Bulk: #{fmt_date(bulk)})" if bulk
+
+    out
   end
 
   def strip_html(string)
