@@ -656,9 +656,7 @@ class LadybirdExport
     extents_for_archival_object(row[:archival_object_id]).map{|row|
       type = I18n.t("enumerations.extent_extent_type.#{row[:extent_type]}",
                     :default => row[:extent_type])
-      portion = I18n.t("enumerations.extent_portion.#{row[:portion]}",
-                       :default => row[:portion])
-      "#{row[:number]} #{type} (#{portion})"
+      "#{row[:number]} #{type}"
     }.join(NEW_LINE_SEPARATOR)
   end
 
