@@ -759,21 +759,23 @@ class LadybirdExport
 
   # What we'd like here is the dates from the Creation dates field formated as Inclusive/Single Date(s) (Bulk: Bulk Dates) if Bulk exists
   # ex. 1924-1967 (Bulk: 1930-1939) or 1851 Nov. 3 or 1851-1853
-  # HM: assuming only zero or one non-bulk and zero or none bulk creation dates (i.e. only looking at the first of each)
+  # Clarification on cardinality:
+  #   There are cases where there is more than one inclusive/single creation date object for an item (ex. Nov 3 1892 and April 8 1893).
+  #   In cases like these, we would like each date object separated with a semi-color (so we would get "Nov 3 1892; April 8 1893").
+  # HM: assuming only zero or none bulk creation dates (i.e. only looking at the first).
   def creation_years(row)
     dates = creation_dates_for_archival_object(row[:archival_object_id])
 
     return if dates.empty?
 
-    non_bulk = dates.select{|d| !d[:bulk]}.first
+    non_bulk = dates.select{|d| !d[:bulk]}
     bulk = dates.select{|d| d[:bulk]}.first
 
     def fmt_date(date) 
-      date[:expression] || [date[:begin].sub(/-.*/, ''), date[:end].sub(/-.*/, '')].compact.join('-')
+      date[:expression] || [(date[:begin] || '').sub(/-.*/, ''), (date[:end] || '').sub(/-.*/, '')].select{|d| !d.empty?}.compact.join('-')
     end
 
-    out = ''
-    out = fmt_date(non_bulk) if non_bulk
+    out = non_bulk.map{|d| fmt_date(d)}.join('; ')
     out += " (Bulk: #{fmt_date(bulk)})" if bulk
 
     out
