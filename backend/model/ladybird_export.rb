@@ -227,6 +227,7 @@ class LadybirdExport
            .left_outer_join(:top_container, :top_container__id => :top_container_link_rlshp__top_container_id)
            .left_outer_join(:enumeration_value, { :language_enum__id => :archival_object__language_id }, :table_alias => :language_enum)
            .left_outer_join(:enumeration_value, { :level_enum__id => :archival_object__level_id }, :table_alias => :level_enum)
+           .left_outer_join(:enumeration_value, { :type_enum__id => :sub_container__type_2_id }, :table_alias => :type_enum)
            .filter(:instance__archival_object_id => @ids)
 
     # archival object bits
@@ -247,7 +248,8 @@ class LadybirdExport
     ds = ds.select_append(Sequel.as(:top_container__barcode, :top_container_barcode))
 
     # sub_container bits
-    ds = ds.select_append(Sequel.as(:sub_container__indicator_2, :sub_container_folder))
+    ds = ds.select_append(Sequel.as(:sub_container__indicator_2, :sub_container_indicator))
+    ds = ds.select_append(Sequel.as(:type_enum__value, :sub_container_type))
 
     prepare_creation_dates
     prepare_related_agents
@@ -588,7 +590,7 @@ class LadybirdExport
   end
 
   def folder(row)
-    row[:sub_container_folder]
+    row[:sub_container_indicator] if row[:sub_container_type] == 'folder'
   end
 
   def host_creator(row)
