@@ -40,7 +40,7 @@ class LadybirdExport
       # Host, Title {fdid=63}
       {:header => "{fdid=63}",           :proc => Proc.new {|row| host_title(row)}},
       # Dates Inclusive/Bulk {fdid=66}
-      {:header => "{fdid=66}",           :proc => Proc.new {|row| creation_years(row)}},
+      {:header => "{fdid=66}",           :proc => Proc.new {|row| collection_creation_years(row)}},
       # Host, note {fdid=68}
       {:header => "{fdid=68}",           :proc => Proc.new {|row| host_note(row)}},
       # Creator {fdid=69}
@@ -147,6 +147,10 @@ class LadybirdExport
     @creators.fetch(id, [])
   end
 
+  def creation_dates_for_resource(id)
+    @resource_creation_dates.fetch(id, [])
+  end
+
   def creation_dates_for_archival_object(id)
     @creation_dates.fetch(id, [])
   end
@@ -251,7 +255,8 @@ class LadybirdExport
     ds = ds.select_append(Sequel.as(:sub_container__indicator_2, :sub_container_indicator))
     ds = ds.select_append(Sequel.as(:type_enum__value, :sub_container_type))
 
-    prepare_creation_dates
+    prepare_resource_creation_dates
+    prepare_ao_creation_dates
     prepare_related_agents
     prepare_extents
     prepare_notes
@@ -273,7 +278,46 @@ class LadybirdExport
     }.compact
   end
 
-  def prepare_creation_dates
+  def prepare_resource_creation_dates
+    @all_resource_dates = {}
+    @resource_creation_dates = {}
+
+    creation_enum_id = EnumerationValue
+                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_label').select(:id))
+                         .filter(:value => 'creation')
+                         .select(:id)
+                         .first[:id]
+
+    bulk_type_enum_id = EnumerationValue
+                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_type').select(:id))
+                         .filter(:value => 'bulk')
+                         .select(:id)
+                         .first[:id]
+
+    ASDate
+      .filter(:date__resource_id => @resource_id)
+      .select(:resource_id,
+              :expression,
+              :begin,
+              :end,
+              Sequel.as(:date__date_type_id, :date_type_id),
+              Sequel.as(:date__label_id, :label_id))
+      .each do |row|
+      @all_resource_dates[row[:resource_id]] ||= []
+      @all_resource_dates[row[:resource_id]] << row
+
+      if row[:label_id] == creation_enum_id
+        if row[:date_type_id] == bulk_type_enum_id
+          row[:bulk] = true
+        end
+
+        @resource_creation_dates[row[:resource_id]] ||= []
+        @resource_creation_dates[row[:resource_id]] << row
+      end
+    end
+  end
+
+  def prepare_ao_creation_dates
     @all_dates = {}
     @creation_dates = {}
 
@@ -763,8 +807,9 @@ class LadybirdExport
   #   There are cases where there is more than one inclusive/single creation date object for an item (ex. Nov 3 1892 and April 8 1893).
   #   In cases like these, we would like each date object separated with a semi-color (so we would get "Nov 3 1892; April 8 1893").
   # HM: assuming only zero or none bulk creation dates (i.e. only looking at the first).
-  def creation_years(row)
-    dates = creation_dates_for_archival_object(row[:archival_object_id])
+  # New requirement: 66 should be the collection date (if it exists)
+  def collection_creation_years(row)
+    dates = creation_dates_for_resource(@resource_id)
 
     return if dates.empty?
 
@@ -772,7 +817,7 @@ class LadybirdExport
     bulk = dates.select{|d| d[:bulk]}.first
 
     def fmt_date(date) 
-      date[:expression] || [(date[:begin] || '').sub(/-.*/, ''), (date[:end] || '').sub(/-.*/, '')].select{|d| !d.empty?}.compact.join('-')
+      date[:expression] || [(date[:begin] || '').sub(/-.*/, ''), (date[:end] || '').sub(/-.*/, '')].select{|d| !d.empty?}.compact.uniq.join('-')
     end
 
     out = non_bulk.map{|d| fmt_date(d)}.join('; ')
