@@ -276,7 +276,7 @@ class DOReport
     return '' unless dates
     dates.map { |date|
       dates = [date[:begin], date[:end]].compact.join('--')
-      "#{date[:label]}: #{dates}"
+      "#{date[:expression]} #{dates}"
     }.join('; ')
   end
 
