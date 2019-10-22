@@ -33,9 +33,14 @@ Enable the plugin by editing the file in `config/config.rb`:
 
 (Make sure you uncomment this line (i.e., remove the leading '#' if present))
 
+Install dependencies by initializing the plugin:
+
+    $ cd /path/to/archivesspace
+    $ ./scripts/initialize-plugin.sh digitization_work_order
+
 See also:
 
-  https://github.com/archivesspace/archivesspace/blob/master/plugins/README.md
+  https://archivesspace.github.io/archivesspace/user/archivesspace-plug-ins/
 
 
 # Configuring it
