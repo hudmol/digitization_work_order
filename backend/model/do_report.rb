@@ -275,8 +275,12 @@ class DOReport
   def self.date_string(dates)
     return '' unless dates
     dates.map { |date|
+    if (date[:begin] && date[:end])
       dates = [date[:begin], date[:end]].compact.join('--')
-      "#{date[:expression]} #{dates}"
+    else
+      dates = date[:expression]
+    end
+    "#{date[:label]}: #{dates}"
     }.join('; ')
   end
 
