@@ -229,9 +229,6 @@ class LadybirdExport
            .left_outer_join(:resource, :resource__id => :archival_object__root_record_id)
            .left_outer_join(:top_container_link_rlshp, :top_container_link_rlshp__sub_container_id => :sub_container__id)
            .left_outer_join(:top_container, :top_container__id => :top_container_link_rlshp__top_container_id)
-           .left_outer_join(:lang_material, :lang_material__archival_object_id => :archival_object__id)
-           .left_outer_join(:language_and_script, :language_and_script__lang_material_id => :lang_material__id)
-           .left_outer_join(:enumeration_value, { :language_enum__id => :language_and_script__language_id }, :table_alias => :language_enum)
            .left_outer_join(:enumeration_value, { :level_enum__id => :archival_object__level_id }, :table_alias => :level_enum)
            .left_outer_join(:enumeration_value, { :type_enum__id => :sub_container__type_2_id }, :table_alias => :type_enum)
            .filter(:instance__archival_object_id => @ids)
@@ -241,7 +238,6 @@ class LadybirdExport
     ds = ds.select_append(Sequel.as(:archival_object__repo_id, :repo_id))
     ds = ds.select_append(Sequel.as(:archival_object__title, :archival_object_title))
     ds = ds.select_append(Sequel.as(:level_enum__value, :archival_object_level))
-    ds = ds.select_append(Sequel.as(:language_enum__value, :archival_object_language))
 
     # resource bits
     ds = ds.select_append(Sequel.as(:resource__id, :resource_id))
@@ -265,6 +261,7 @@ class LadybirdExport
     prepare_breadcrumbs
     prepare_subjects
     prepare_digital_object_instance_flags
+    prepare_languages
 
     ds
   end
@@ -619,6 +616,20 @@ class LadybirdExport
     end
   end
 
+  def prepare_languages
+    @languages = {}
+
+    LangMaterial
+      .filter(:lang_material__archival_object_id => @ids)
+      .join(:language_and_script, :language_and_script__lang_material_id => :lang_material__id)
+      .join(:enumeration_value, { :language_enum__id => :language_and_script__language_id }, :table_alias => :language_enum)
+      .select(:lang_material__archival_object_id, Sequel.as(:language_enum__value, :archival_object_language))
+      .each do |row|
+      @languages[row[:archival_object_id]] ||= []
+      @languages[row[:archival_object_id]] << row[:archival_object_language]
+    end
+  end
+
   def local_record_id(row)
     "/repositories/#{row[:repo_id]}/archival_objects/#{row[:archival_object_id]}"
   end
@@ -689,7 +700,7 @@ class LadybirdExport
   end
 
   def language(row)
-    row[:archival_object_language]
+    @languages.fetch(row[:archival_object_id], []).uniq.join('|')
   end
 
   def creation_date(row)
