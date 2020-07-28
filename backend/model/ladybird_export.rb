@@ -287,12 +287,6 @@ class LadybirdExport
                          .select(:id)
                          .first[:id]
 
-    bulk_type_enum_id = EnumerationValue
-                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_type').select(:id))
-                         .filter(:value => 'bulk')
-                         .select(:id)
-                         .first[:id]
-
     ASDate
       .filter(:date__resource_id => @resource_id)
       .select(:resource_id,
@@ -306,10 +300,6 @@ class LadybirdExport
       @all_resource_dates[row[:resource_id]] << row
 
       if row[:label_id] == creation_enum_id
-        if row[:date_type_id] == bulk_type_enum_id
-          row[:bulk] = true
-        end
-
         @resource_creation_dates[row[:resource_id]] ||= []
         @resource_creation_dates[row[:resource_id]] << row
       end
@@ -326,12 +316,6 @@ class LadybirdExport
                          .select(:id)
                          .first[:id]
 
-    bulk_type_enum_id = EnumerationValue
-                         .filter(:enumeration_id => Enumeration.filter(:name => 'date_type').select(:id))
-                         .filter(:value => 'bulk')
-                         .select(:id)
-                         .first[:id]
-
     ASDate
       .filter(:date__archival_object_id => @ids)
       .select(:archival_object_id,
@@ -345,10 +329,6 @@ class LadybirdExport
       @all_dates[row[:archival_object_id]] << row
 
       if row[:label_id] == creation_enum_id
-        if row[:date_type_id] == bulk_type_enum_id
-          row[:bulk] = true
-        end
-
         @creation_dates[row[:archival_object_id]] ||= []
         @creation_dates[row[:archival_object_id]] << row
       end
@@ -826,8 +806,8 @@ class LadybirdExport
 
     return if dates.empty?
 
-    non_bulk = dates.select{|d| !d[:bulk]}
-    bulk = dates.select{|d| d[:bulk]}.first
+    non_bulk = dates.select{|d| d.date_type != 'bulk'}
+    bulk = dates.find{|d| d.date_type == 'bulk'}
 
     def fmt_date(date) 
       date[:expression] || [(date[:begin] || '').sub(/-.*/, ''), (date[:end] || '').sub(/-.*/, '')].select{|d| !d.empty?}.compact.uniq.join('-')
