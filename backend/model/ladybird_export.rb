@@ -449,25 +449,19 @@ class LadybirdExport
               Sequel.as(:note__resource_id, :resource_id),
               Sequel.as(:note__notes, :note))
       .each do |row|
+      parsed = parse_note(row)
 
+      next if parsed.nil?
+
+      # group notes by type
       if row[:archival_object_id]
         @notes[row[:archival_object_id]] ||= {}
-
-        parsed = parse_note(row)
-
-        next if parsed.nil?
-
         @notes[row[:archival_object_id]][parsed.fetch('type')] ||= []
-        @notes[row[:archival_object_id]][parsed.fetch('type')] << parsed.fetch('notes')
+        @notes[row[:archival_object_id]][parsed.fetch('type')] << parsed.fetch('note')
       elsif row[:resource_id]
         @resource_notes[row[:resource_id]] ||= {}
-
-        parsed = parse_note(row)
-
-        next if parsed.nil?
-
         @resource_notes[row[:resource_id]][parsed.fetch('type')] ||= []
-        @resource_notes[row[:resource_id]][parsed.fetch('type')] << parsed.fetch('notes')
+        @resource_notes[row[:resource_id]][parsed.fetch('type')] << parsed.fetch('note')
       end
     end
   end
@@ -475,14 +469,9 @@ class LadybirdExport
   def parse_note(row)
     note = ASUtils.json_parse(row[:note])
 
-    type = note.fetch('type')
-    subnotes = note.fetch('subnotes', nil)
-
-    return unless subnotes
-
     {
-      'type' => type,
-      'notes' => subnotes.collect{|n| n.fetch('content', nil)}.compact
+      'type' => note.fetch('type', note.fetch('jsonmodel_type')),
+      'note' => note.to_h,
     }
   end
 
@@ -646,23 +635,45 @@ class LadybirdExport
 
   def note(row)
     notes_for_archival_object(row[:archival_object_id])
-      .map{|type, content|
+      .map{|type, notes|
         next if type == 'scopecontent'
         next if type == 'accessrestrict'
         next if type == 'prefercite'
-  
-        content.flatten
+
+        notes_to_text(notes)
       }
       .flatten
       .compact
       .join(NEW_LINE_SEPARATOR)
   end
 
+  def notes_to_text(notes)
+    notes
+      .map{|note_json| note_to_text(note_json)}
+      .compact
+      .map{|note_text| strip_html(note_text)}
+  end
+
+  def note_to_text(note_json)
+    if note_json['jsonmodel_type'] == 'note_singlepart'
+      note_json.fetch('content', []).join(NEW_LINE_SEPARATOR)
+    elsif note_json['jsonmodel_type'] == 'note_multipart'
+      note_json.fetch('subnotes', []).map{|subnote|
+        note_to_text(subnote)
+      }.compact.join(NEW_LINE_SEPARATOR)
+    elsif note_json['jsonmodel_type'] == 'note_text'
+      note_json['content']
+    else
+      # unsupported note type
+    end
+  end
+
   def abstract(row)
     notes_for_archival_object(row[:archival_object_id])
-      .map{|type, content|
+      .map{|type, notes|
         next unless type == 'scopecontent'
-        content.flatten
+
+        notes_to_text(notes)
       }
       .compact
       .flatten
@@ -721,9 +732,10 @@ class LadybirdExport
 
   def citation_note(row)
     archival_object_citation = notes_for_archival_object(row[:archival_object_id])
-                                .map{|type, content|
+                                .map{|type, notes|
                                   next unless type == 'prefercite'
-                                  content.flatten
+
+                                  notes_to_text(notes)
                                 }
                                 .compact
                                 .flatten
@@ -731,9 +743,10 @@ class LadybirdExport
     return archival_object_citation.join(NEW_LINE_SEPARATOR) unless archival_object_citation.empty?
 
     notes_for_resource(row[:resource_id])
-      .map{|type, content|
+      .map{|type, notes|
         next unless type == 'prefercite'
-        content.flatten
+
+        notes_to_text(notes)
       }
       .compact
       .flatten
