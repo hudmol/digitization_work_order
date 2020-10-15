@@ -388,7 +388,7 @@ class LadybirdExport
       .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
       .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
       .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(Sequel.|({:linked_agents_rlshp__role_id => creator_enum_id, :linked_agents_rlshp__role_id => subject_enum_id}))
+      .and(Sequel.|({:linked_agents_rlshp__role_id => [creator_enum_id, subject_enum_id]}))
       .select(Sequel.as(:archival_object__id, :archival_object_id),
               Sequel.as(:linked_agents_rlshp__role_id, :role_id),
               Sequel.as(:name_person__sort_name, :person),
