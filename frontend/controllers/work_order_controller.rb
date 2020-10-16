@@ -2,7 +2,7 @@ require 'cgi'
 
 class WorkOrderController < ApplicationController
 
-  set_access_control "view_repository" => [:index, :generate_report, :generate_ladybird_export]
+  set_access_control "view_repository" => [:index, :generate_report, :generate_ladybird_export, :generate_goobi_export]
 
   def index
     @uri = params[:resource]
@@ -17,6 +17,12 @@ class WorkOrderController < ApplicationController
     generate_response(uri, args)
   end
 
+  def generate_goobi_export
+    uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/goobi"
+    args = {'uri[]' => JSON.parse(params[:selected]), 'resource_uri' => params[:resource]}
+
+    generate_response(uri, args)
+  end
 
   def generate_report
     uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/report"
