@@ -18,39 +18,39 @@ class GoobiExport
   def column_definitions
     [
       # Local record ID {fdid=57}
-      {:header => "aspaceURI",           :proc => Proc.new {|row| local_record_id(row)}}, # NEW ish -- was 56 but needed to be moved to 57
+      {:header => "aspaceURI",              :proc => Proc.new {|row| local_record_id(row)}}, # NEW ish -- was 56 but needed to be moved to 57
       # Call number {fdid=58}
-      {:header => "callNumber",           :proc => Proc.new {|row| call_number(row)}},
+      {:header => "callNumber",             :proc => Proc.new {|row| call_number(row)}},
       # Box {fdid=60}
-      {:header => "container(Box)",           :proc => Proc.new {|row| box(row)}},
+      {:header => "container(Box)",         :proc => Proc.new {|row| box(row)}},
       # Folder {fdid=61}
-      {:header => "subcontainer(Folder)",           :proc => Proc.new {|row| folder(row)}},
+      {:header => "subcontainer(Folder)",   :proc => Proc.new {|row| folder(row)}},
       # Host, Title {fdid=63}
-      {:header => "hostTitle",           :proc => Proc.new {|row| host_title(row)}},
+      {:header => "hostTitle",              :proc => Proc.new {|row| host_title(row)}},
       # Dates Inclusive/Bulk {fdid=66}
-      {:header => "dates",           :proc => Proc.new {|row| collection_creation_years(row)}},
+      {:header => "dates",                  :proc => Proc.new {|row| collection_creation_years(row)}},
       # Title {fdid=70}
-      {:header => "title",           :proc => Proc.new {|row| title(row)}},
+      {:header => "title",                  :proc => Proc.new {|row| title(row)}},
       # Physical description {fdid=82}
-      {:header => "physDesc",           :proc => Proc.new {|row| physical_description(row)}},
+      {:header => "physDesc",               :proc => Proc.new {|row| physical_description(row)}},
       # Note {fdid=86}
-      {:header => "{fdid=86}",           :proc => Proc.new {|row| note(row)}},
+      {:header => "{fdid=86}",              :proc => Proc.new {|row| note(row)}},
       # Abstract {fdid=87}
-      {:header => "abstract",           :proc => Proc.new {|row| abstract(row)}},
+      {:header => "abstract",               :proc => Proc.new {|row| abstract(row)}},
       # Barcode {fdid=105}
-      {:header => "barcode",           :proc => Proc.new {|row| barcode(row)}},
+      {:header => "barcode",                :proc => Proc.new {|row| barcode(row)}},
       # Publication Type
-      {:header => "pubType",           :proc => Proc.new {|row| "ArchivalObject" }},
+      {:header => "pubType",                :proc => Proc.new {|row| "ArchivalObject" }},
       # Collection
-      {:header => "collection",           :proc => Proc.new {|row| "DefaultCollection" }},
+      {:header => "collection",             :proc => Proc.new {|row| "DefaultCollection" }},
       # use opac
-      {:header => "useOPAC",           :proc => Proc.new {|row| "TRUE" }},
+      {:header => "useOPAC",                :proc => Proc.new {|row| "TRUE" }},
       # use aspace opac
-      {:header => "opacName",           :proc => Proc.new {|row| "aspace" }},
+      {:header => "opacName",               :proc => Proc.new {|row| "aspace" }},
       #Which goobi template?
       {:header => "template",               :proc => Proc.new {|row| nil }}, #BLANK!
       #Process title
-      {:header => "processTitle",               :proc => Proc.new {|row| nil }}, #BLANK!
+      {:header => "processTitle",           :proc => Proc.new {|row| nil }}, #BLANK!
     ]
   end
 
@@ -107,10 +107,6 @@ class GoobiExport
     @extents.fetch(id, [])
   end
 
-  def creators_for_resource(id)
-    @resource_creators.fetch(id, [])
-  end
-
   def notes_for_archival_object(id)
     @notes.fetch(id, {})
   end
@@ -151,19 +147,6 @@ class GoobiExport
     end
   end
 
-  def name_subjects_for_archival_object(id)
-    @agent_subjects.fetch(id, [])
-  end
-
-  def topic_subjects_for_archival_object(id)
-    @subjects.fetch(id, []).select{|s| s[:first_term_type] == 'topical'}
-  end
-
-  def geo_subjects_for_archival_object(id)
-    @subjects.fetch(id, []).select{|s| s[:first_term_type] == 'geographic'}
-  end
-
-
   private
 
   def dataset
@@ -199,13 +182,10 @@ class GoobiExport
 
     prepare_resource_creation_dates
     prepare_ao_creation_dates
-    prepare_related_agents
     prepare_extents
     prepare_notes
     prepare_breadcrumbs
-    prepare_subjects
     prepare_digital_object_instance_flags
-    prepare_languages
 
     ds
   end
@@ -294,90 +274,6 @@ class GoobiExport
 
       @extents[row[:archival_object_id]] ||= []
       @extents[row[:archival_object_id]] << row
-    end
-  end
-
-  def prepare_related_agents
-    @creators = {}
-    @resource_creators = {}
-    @agent_subjects = {}
-
-    subject_enum_id = nil
-    creator_enum_id = nil
-
-    EnumerationValue
-      .filter(:enumeration_id => Enumeration.filter(:name => 'linked_agent_role').select(:id))
-      .filter(:value => ['creator', 'subject'])
-      .select(:id, :value)
-      .each do |row|
-      if row[:value] == 'creator'
-        creator_enum_id = row[:id]
-      elsif row[:value] == 'subject'
-        subject_enum_id = row[:id]
-      end
-    end
-
-    ArchivalObject
-      .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__archival_object_id => :archival_object__id)
-      .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
-      .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
-      .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
-      .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
-      .left_outer_join(:name_person, :name_person__id => :agent_person__id)
-      .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
-      .left_outer_join(:name_family, :name_family__id => :agent_family__id)
-      .left_outer_join(:name_software, :name_software__id => :agent_software__id)
-      .filter(:archival_object__id => @ids)
-      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(Sequel.|({:linked_agents_rlshp__role_id => [creator_enum_id, subject_enum_id]}))
-      .select(Sequel.as(:archival_object__id, :archival_object_id),
-              Sequel.as(:linked_agents_rlshp__role_id, :role_id),
-              Sequel.as(:name_person__sort_name, :person),
-              Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
-              Sequel.as(:name_family__sort_name, :family),
-              Sequel.as(:name_software__sort_name, :software))
-      .distinct
-      .each do |row|
-
-      if row[:role_id] == creator_enum_id
-        @creators[row[:archival_object_id]] ||= []
-        @creators[row[:archival_object_id]] << row
-      elsif row[:role_id] == subject_enum_id
-        @agent_subjects[row[:archival_object_id]] ||= []
-        @agent_subjects[row[:archival_object_id]] << row
-      end
-    end
-
-    Resource
-      .left_outer_join(:linked_agents_rlshp, :linked_agents_rlshp__resource_id => :resource__id)
-      .left_outer_join(:agent_person, :agent_person__id => :linked_agents_rlshp__agent_person_id)
-      .left_outer_join(:agent_corporate_entity, :agent_corporate_entity__id => :linked_agents_rlshp__agent_corporate_entity_id)
-      .left_outer_join(:agent_family, :agent_family__id => :linked_agents_rlshp__agent_family_id)
-      .left_outer_join(:agent_software, :agent_software__id => :linked_agents_rlshp__agent_software_id)
-      .left_outer_join(:name_person, :name_person__id => :agent_person__id)
-      .left_outer_join(:name_corporate_entity, :name_corporate_entity__id => :agent_corporate_entity__id)
-      .left_outer_join(:name_family, :name_family__id => :agent_family__id)
-      .left_outer_join(:name_software, :name_software__id => :agent_software__id)
-      .left_outer_join(:archival_object, :archival_object__root_record_id => :resource__id)
-      .filter(:archival_object__id => @ids)
-      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(:linked_agents_rlshp__role_id => creator_enum_id)
-      .select(Sequel.as(:resource__id, :resource_id),
-              Sequel.as(:name_person__sort_name, :person),
-              Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
-              Sequel.as(:name_family__sort_name, :family),
-              Sequel.as(:name_software__sort_name, :software))
-      .distinct
-      .each do |row|
-
-      @resource_creators[row[:archival_object_id]] ||= []
-      @resource_creators[row[:archival_object_id]] << row
     end
   end
 
@@ -482,39 +378,6 @@ class GoobiExport
     end
   end
 
-
-  def prepare_subjects
-    @subjects = {}
-
-    current = nil
-
-    Subject
-      .left_outer_join(:subject_rlshp, :subject_rlshp__subject_id => :subject__id)
-      .left_outer_join(:subject_term, :subject_term__subject_id => :subject__id)
-      .left_outer_join(:term, :term__id => :subject_term__term_id)
-      .left_outer_join(:enumeration_value, { :term_type_enum__id => :term__term_type_id }, :table_alias => :term_type_enum)
-      .filter(:subject_rlshp__archival_object_id => @ids)
-      .select(Sequel.as(:subject_rlshp__archival_object_id, :archival_object_id),
-              Sequel.as(:subject__id, :subject_id),
-              Sequel.as(:term_type_enum__value, :term_type),
-              Sequel.as(:subject__title, :display_string))
-      .order(:subject__id, :subject_term__id)
-      .each do |row|
-      @subjects[row[:archival_object_id]] ||= []
-      if current.nil? || current[:subject_id] != row[:subject_id]
-        current = {
-          :subject_id => row[:subject_id],
-          :display_string => row[:display_string],
-          :first_term_type => row[:term_type]
-        }
-
-        @subjects[row[:archival_object_id]] << current
-      else
-        # we only care about the first term type
-      end
-    end
-  end
-
   def prepare_digital_object_instance_flags
     @has_digital_object_instances = []
 
@@ -526,20 +389,6 @@ class GoobiExport
       .distinct
       .each do |row|
       @has_digital_object_instances << row[:archival_object_id]
-    end
-  end
-
-  def prepare_languages
-    @languages = {}
-
-    LangMaterial
-      .filter(:lang_material__archival_object_id => @ids)
-      .join(:language_and_script, :language_and_script__lang_material_id => :lang_material__id)
-      .join(:enumeration_value, { :language_enum__id => :language_and_script__language_id }, :table_alias => :language_enum)
-      .select(:lang_material__archival_object_id, Sequel.as(:language_enum__value, :archival_object_language))
-      .each do |row|
-      @languages[row[:archival_object_id]] ||= []
-      @languages[row[:archival_object_id]] << row[:archival_object_language]
     end
   end
 
@@ -561,12 +410,6 @@ class GoobiExport
 
   def folder(row)
     row[:sub_container_indicator] if row[:sub_container_type] == 'folder'
-  end
-
-  def host_creator(row)
-    creators_for_resource(row[:archival_object_id])
-      .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
-      .join(NEW_LINE_SEPARATOR)
   end
 
   def host_title(row)
@@ -634,10 +477,6 @@ class GoobiExport
       .join(NEW_LINE_SEPARATOR)
   end
 
-  def language(row)
-    @languages.fetch(row[:archival_object_id], []).uniq.join('|')
-  end
-
   def creation_date(row)
     creation_dates_for_archival_object(row[:archival_object_id])
       .map{|row| row[:expression] || [row[:begin], row[:end]].compact.join(' - ')}
@@ -652,23 +491,6 @@ class GoobiExport
     }.join(NEW_LINE_SEPARATOR)
   end
 
-  def name_subjects(row)
-    name_subjects_for_archival_object(row[:archival_object_id])
-      .map{|row| (row[:person] || row[:corporate_entity] || row[:family] || row[:software])}
-      .join(NEW_LINE_SEPARATOR)
-  end
-
-  def topic_subjects(row)
-    topic_subjects_for_archival_object(row[:archival_object_id])
-      .map{|row| row[:display_string]}
-      .join(NEW_LINE_SEPARATOR)
-  end
-
-  def geo_subjects(row)
-    geo_subjects_for_archival_object(row[:archival_object_id])
-      .map{|row| row[:display_string]}
-      .join(NEW_LINE_SEPARATOR)
-  end
 
   def ead_location(row)
     row[:resource_ead_location]
