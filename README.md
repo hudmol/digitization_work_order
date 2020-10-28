@@ -49,6 +49,8 @@ To use the Ladybird form of the report, set the following configuration option i
 
     AppConfig[:digitization_work_order_ladybird] = true
 
+To use the Goobi form of the report, set the following configuration option in config.rb:
+    AppConfig[:digitization_work_order_goobi] = true
 
 # How it works
 
