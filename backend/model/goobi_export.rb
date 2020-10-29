@@ -29,12 +29,14 @@ class GoobiExport
       {:header => "hostTitle",              :proc => Proc.new {|row| host_title(row)}},
       # Dates Inclusive/Bulk {fdid=66}
       {:header => "dates",                  :proc => Proc.new {|row| collection_creation_years(row)}},
+      # Host, note {fdid=68}
+      {:header => "sourceNote",           :proc => Proc.new {|row| host_note(row)}},
       # Title {fdid=70}
       {:header => "title",                  :proc => Proc.new {|row| title(row)}},
       # Physical description {fdid=82}
       {:header => "physDesc",               :proc => Proc.new {|row| physical_description(row)}},
       # Note {fdid=86}
-      {:header => "{fdid=86}",              :proc => Proc.new {|row| note(row)}},
+      {:header => "note",              :proc => Proc.new {|row| note(row)}},
       # Abstract {fdid=87}
       {:header => "abstract",               :proc => Proc.new {|row| abstract(row)}},
       # Barcode {fdid=105}
