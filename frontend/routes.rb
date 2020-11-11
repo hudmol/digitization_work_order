@@ -5,6 +5,7 @@ ArchivesSpace::Application.routes.draw do
     scope prefix do
       match('/plugins/work_order/generate_report' => 'work_order#generate_report', :via => [:post])
       match('/plugins/work_order/generate_ladybird_export' => 'work_order#generate_ladybird_export', :via => [:post])
+      match('/plugins/work_order/generate_goobi_export' => 'work_order#generate_goobi_export', :via => [:post])
       match('/plugins/work_order' => 'work_order#index', :via => [:get])
     end
   end

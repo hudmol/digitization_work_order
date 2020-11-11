@@ -3,11 +3,11 @@ Digitization Work Order Plugin
 
 This is an ArchivesSpace plugin that provides the ability to download reports for sets of components under a resource for the purpose of creating digitization work orders.
 
-There are two forms of report, selectable via a configuration option.
+There are three forms of report, selectable via a configuration option.
 
 The default report is a TSV file. When this work order is downloaded, component unique identifiers will be generated for components that don't have one. The plugin ships with a default id generator. See the section below on how to provide your own generator.
 
-The alternative form of the report is an xlsx file suitable for importing into Yale's Ladybird system.
+The alternative form of the report is an xlsx file suitable for importing into Yale's Ladybird system. Finally, there is an xslx for import into Goobi, also for Yale's use.
 
 This plugin was developed by Hudson Molonglo for New York University and Yale University. It will run under ArchivesSpace versions v1.5.x and v2.1.x.
 
@@ -49,6 +49,8 @@ To use the Ladybird form of the report, set the following configuration option i
 
     AppConfig[:digitization_work_order_ladybird] = true
 
+To use the Goobi form of the report, set the following configuration option in config.rb:
+    AppConfig[:digitization_work_order_goobi] = true
 
 # How it works
 
