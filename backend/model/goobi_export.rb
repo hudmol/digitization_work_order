@@ -18,7 +18,7 @@ class GoobiExport
   def column_definitions
     [
       # Local record ID {fdid=57}
-      {:header => "aspaceURI",              :proc => Proc.new {|row| local_record_id(row)}}, # NEW ish -- was 56 but needed to be moved to 57
+      {:header => "aspace_uri",              :proc => Proc.new {|row| local_record_id(row)}}, # NEW ish -- was 56 but needed to be moved to 57
       # Call number {fdid=58}
       {:header => "callNumber",             :proc => Proc.new {|row| call_number(row)}},
       # Box {fdid=60}
@@ -40,7 +40,7 @@ class GoobiExport
       # Abstract {fdid=87}
       {:header => "abstract",               :proc => Proc.new {|row| abstract(row)}},
       # Barcode {fdid=105}
-      {:header => "barcode",                :proc => Proc.new {|row| barcode(row)}},
+      {:header => "aspace_barcode",                :proc => Proc.new {|row| barcode(row)}},
       # Publication Type
       {:header => "pubType",                :proc => Proc.new {|row| "ArchivalObject" }},
       # Collection
@@ -49,8 +49,6 @@ class GoobiExport
       {:header => "useOPAC",                :proc => Proc.new {|row| "TRUE" }},
       # use aspace opac
       {:header => "opacName",               :proc => Proc.new {|row| "aspace" }},
-      #Which goobi template?
-      {:header => "template",               :proc => Proc.new {|row| nil }}, #BLANK!
       #Process title
       {:header => "processTitle",           :proc => Proc.new {|row| nil }}, #BLANK!
     ]
