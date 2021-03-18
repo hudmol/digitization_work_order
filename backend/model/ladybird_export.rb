@@ -384,11 +384,11 @@ class LadybirdExport
       .left_outer_join(:name_family, :name_family__id => :agent_family__id)
       .left_outer_join(:name_software, :name_software__id => :agent_software__id)
       .filter(:archival_object__id => @ids)
-      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(Sequel.|({:linked_agents_rlshp__role_id => [creator_enum_id, subject_enum_id]}))
+      .filter(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
+      .filter(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
+      .filter(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
+      .filter(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
+      .filter(Sequel.|({:linked_agents_rlshp__role_id => [creator_enum_id, subject_enum_id]}))
       .select(Sequel.as(:archival_object__id, :archival_object_id),
               Sequel.as(:linked_agents_rlshp__role_id, :role_id),
               Sequel.as(:name_person__sort_name, :person),
@@ -419,11 +419,11 @@ class LadybirdExport
       .left_outer_join(:name_software, :name_software__id => :agent_software__id)
       .left_outer_join(:archival_object, :archival_object__root_record_id => :resource__id)
       .filter(:archival_object__id => @ids)
-      .and(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
-      .and(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
-      .and(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
-      .and(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
-      .and(:linked_agents_rlshp__role_id => creator_enum_id)
+      .filter(Sequel.|({:name_person__is_display_name => 1}, {:name_person__is_display_name => nil}))
+      .filter(Sequel.|({:name_corporate_entity__is_display_name => 1}, {:name_corporate_entity__is_display_name => nil}))
+      .filter(Sequel.|({:name_family__is_display_name => 1}, {:name_family__is_display_name => nil}))
+      .filter(Sequel.|({:name_software__is_display_name => 1}, {:name_software__is_display_name => nil}))
+      .filter(:linked_agents_rlshp__role_id => creator_enum_id)
       .select(Sequel.as(:resource__id, :resource_id),
               Sequel.as(:name_person__sort_name, :person),
               Sequel.as(:name_corporate_entity__sort_name, :corporate_entity),
