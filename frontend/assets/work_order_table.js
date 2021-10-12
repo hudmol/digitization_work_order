@@ -215,16 +215,39 @@
 
             // update record 'selected' state
             var index = getIndexForUri(flattened, uri);
-            flattened[index].selected = $checkbox.is(":checked");
 
-            // update all children
-            var level = flattened[index].level;
-            for (var i = index + 1; i < flattened.length; i++) {
-                if (flattened[i].level > level) {
-                    flattened[i].selected = $checkbox.is(":checked");
-                } else {
-                    break;
+            // only get fancy if we are a parent
+            if (flattened[index].children) {
+                var lastIndex = index + 1;
+                var allSelected = true;
+                var level = flattened[index].level;
+
+                // find out if all children are selected
+                for (var i = index + 1; i < flattened.length; i++) {
+                    if (flattened[i].level > level) {
+                        lastIndex = i;
+                        allSelected = allSelected && flattened[i].selected;
+                    } else {
+                        break;
+                    }
                 }
+
+                if (flattened[index].selected && allSelected) {
+                    // if the parent is currently selected and all children are selected
+                    // then keep parent selected but deselect the children
+                    $checkbox.prop("checked", true);
+                    for (var i = index + 1; i <= lastIndex; i++) {
+                        flattened[i].selected = false;
+                    }
+                } else {
+                    // otherwise just set them all to match
+                    flattened[index].selected = $checkbox.is(":checked");
+                    for (var i = index + 1; i <= lastIndex; i++) {
+                        flattened[i].selected = $checkbox.is(":checked");
+                    }
+                }
+            } else {
+                flattened[index].selected = $checkbox.is(":checked");
             }
 
             var offsetTop = workOrderFatTable.scroll.scrollTop;
