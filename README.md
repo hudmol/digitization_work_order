@@ -9,7 +9,7 @@ The default report is a TSV file. When this work order is downloaded, component 
 
 The alternative form of the report is an xlsx file suitable for importing into Yale's Ladybird system. Finally, there is an xslx for import into Goobi, also for Yale's use.
 
-This plugin was developed by Hudson Molonglo for New York University and Yale University. It will run under ArchivesSpace versions v1.5.x and v2.1.x. It is reportedly running fine on more recent versions, including v2.7.x and beyond.
+This plugin was developed by Hudson Molonglo for New York University and Yale University. It should run under all ArchivesSpace versions from v1.5.x to v4.0.x.
 
 
 # Getting Started
