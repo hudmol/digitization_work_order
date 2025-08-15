@@ -3,18 +3,22 @@
       <form class="form-inline">
         <fieldset class="form-group additional-options">
           <legend><%= I18n.t("plugins.digitization_work_order.additional_options") %></legend>
-          <label class="checkbox-inline" for="series"><input type="checkbox" id="series" name="series">
-            <%= I18n.t("plugins.digitization_work_order.series_title") %>
-          </label>
-          <label class="checkbox-inline" for="subseries"><input type="checkbox" id="subseries" name="subseries">
-            <%= I18n.t("plugins.digitization_work_order.subseries_title") %>
-          </label>
-          <label class="checkbox-inline" for="barcode"><input type="checkbox" id="barcode" name="barcode">
-            <%= I18n.t("plugins.digitization_work_order.barcode") %>
-          </label>
-          <label class="checkbox-inline" for="dates"><input type="checkbox" id="dates" name="dates">
-            <%= I18n.t("plugins.digitization_work_order.dates") %>
-          </label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="checkbox" id="series" name="series">
+            <label class="form-check-label" for="series"><%= I18n.t("plugins.digitization_work_order.series_title") %></label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input"  type="checkbox" id="subseries" name="subseries">
+            <label class="form-check-label" for="subseries"><%= I18n.t("plugins.digitization_work_order.subseries_title") %></label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input"  type="checkbox" id="barcode" name="barcode">
+            <label class="form-check-label" for="barcode"><%= I18n.t("plugins.digitization_work_order.barcode") %></label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input"  type="checkbox" id="dates" name="dates">
+            <label class="form-check-label" for="dates"><%= I18n.t("plugins.digitization_work_order.dates") %></label>
+          </div>
         </fieldset>
       </form>
     </div>
