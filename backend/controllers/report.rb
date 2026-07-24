@@ -3,7 +3,7 @@ class ArchivesSpaceService < Sinatra::Base
   Endpoint.post('/plugins/digitization_work_order/repositories/:repo_id/report')
   .description("Return TSV formatted report for record uris")
   .params(["repo_id", :repo_id],
-          ["uri", [String], "The uris of the records to include in the report"],
+          ["uri", String, "A JSON-encoded array of the uris of the records to include in the report"],
           ["generate_ids", BooleanParam, "Whether to generate missing component_ids (defaults to false)", :optional => true],
           ["extras", [String], "Extra columns to include in the report", :optional => true])
   .permissions([:view_repository])
@@ -19,7 +19,7 @@ class ArchivesSpaceService < Sinatra::Base
         "Content-Type" => "text/tab-separated-values",
         "Content-Disposition" => "attachment; filename=\"digitization_work_order_report.tsv\""
       },
-      DOReport.new(params[:uri], opts).to_stream
+      DOReport.new(ASUtils.json_parse(params[:uri]), opts).to_stream
     ]
   end
 
@@ -27,7 +27,7 @@ class ArchivesSpaceService < Sinatra::Base
   Endpoint.post('/plugins/digitization_work_order/repositories/:repo_id/ladybird')
     .description("Return Excel formatted export for record uris")
     .params(["repo_id", :repo_id],
-            ["uri", [String], "The uris of the records to include in the report"],
+            ["uri", String, "A JSON-encoded array of the uris of the records to include in the report"],
             ["resource_uri", String, "The resource URI"])
     .permissions([:view_repository])
     .returns([200, "report"]) \
@@ -38,7 +38,7 @@ class ArchivesSpaceService < Sinatra::Base
         "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition" => "attachment; filename=\"#{ladybird_export_filename(JSONModel.parse_reference(params[:resource_uri]).fetch(:id))}\""
       },
-      LadybirdExport.new(params[:uri], params[:resource_uri]).to_stream
+      LadybirdExport.new(ASUtils.json_parse(params[:uri]), params[:resource_uri]).to_stream
     ]
   end
 
@@ -51,7 +51,7 @@ class ArchivesSpaceService < Sinatra::Base
   Endpoint.post('/plugins/digitization_work_order/repositories/:repo_id/goobi')
     .description("Return Excel formatted export for record uris")
     .params(["repo_id", :repo_id],
-            ["uri", [String], "The uris of the records to include in the report"],
+            ["uri", String, "A JSON-encoded array of the uris of the records to include in the report"],
             ["resource_uri", String, "The resource URI"])
     .permissions([:view_repository])
     .returns([200, "report"]) \
@@ -62,7 +62,7 @@ class ArchivesSpaceService < Sinatra::Base
         "Content-Type" => "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         "Content-Disposition" => "attachment; filename=\"#{goobi_export_filename(JSONModel.parse_reference(params[:resource_uri]).fetch(:id))}\""
       },
-      GoobiExport.new(params[:uri], params[:resource_uri]).to_stream
+      GoobiExport.new(ASUtils.json_parse(params[:uri]), params[:resource_uri]).to_stream
     ]
   end
 

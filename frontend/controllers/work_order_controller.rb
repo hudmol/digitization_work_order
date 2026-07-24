@@ -12,14 +12,14 @@ class WorkOrderController < ApplicationController
 
   def generate_ladybird_export
     uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/ladybird"
-    args = {'uri[]' => JSON.parse(params[:selected]), 'resource_uri' => params[:resource]}
+    args = {'uri' => params[:selected], 'resource_uri' => params[:resource]}
 
     generate_response(uri, args)
   end
 
   def generate_goobi_export
     uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/goobi"
-    args = {'uri[]' => JSON.parse(params[:selected]), 'resource_uri' => params[:resource]}
+    args = {'uri' => params[:selected], 'resource_uri' => params[:resource]}
 
     generate_response(uri, args)
   end
@@ -27,7 +27,7 @@ class WorkOrderController < ApplicationController
   def generate_report
     uri = "/plugins/digitization_work_order/repositories/#{session[:repo_id]}/report"
     args = {
-      'uri[]' => JSON.parse(params[:selected]),
+      'uri' => params[:selected],
       'extras[]' => JSON.parse(params[:extras]),
       'generate_ids' => params[:report_type] == 'downloadWorkOrder'
     }
